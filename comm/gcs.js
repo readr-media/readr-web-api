@@ -87,8 +87,10 @@ const deleteFilesInFolder = (bucket, options) => {
 }
 
 const publishAction = (data, action_attr) => {
-  process.env['GOOGLE_APPLICATION_CREDENTIALS'] = GCP_KEYFILE
-  const pubsubClient = PubSub({ projectId: GCP_PROJECT_ID, })
+  // process.env['GOOGLE_APPLICATION_CREDENTIALS'] = GCP_KEYFILE
+  // debug('GCP_KEYFILE', GCP_KEYFILE)
+  // debug(`process.env['GOOGLE_APPLICATION_CREDENTIALS']`, process.env['GOOGLE_APPLICATION_CREDENTIALS'])
+  const pubsubClient = PubSub({ projectId: GCP_PROJECT_ID, keyFilename: GCP_KEYFILE, })
   const topic = pubsubClient.topic(GCP_PUBSUB_TOPIC_NAME)
   const publisher = topic.publisher()
 
