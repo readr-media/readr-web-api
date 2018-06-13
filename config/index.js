@@ -53,7 +53,7 @@ module.exports = {
   POST_TYPE: config.has('POST_TYPE') && config.get('POST_TYPE'),
   PROJECT_STATUS: config.has('PROJECT_STATUS') && config.get('PROJECT_STATUS'),
   PROJECT_PUBLISH_STATUS: config.has('PROJECT_PUBLISH_STATUS') && config.get('PROJECT_PUBLISH_STATUS'),
-  REDIS_CONNECTION_TIMEOUT: config.has('REDIS_CONNECTION_TIMEOUT') && 2000,
+  REDIS_CONNECTION_TIMEOUT: (config.has('REDIS_CONNECTION_TIMEOUT') && config.get('REDIS_CONNECTION_TIMEOUT') || 2000),
   REDIS_HOST: config.has('REDIS_HOST') && config.get('REDIS_HOST'),
   REDIS_PORT: config.has('REDIS_PORT') && config.get('REDIS_PORT'),
   REDIS_AUTH: config.has('REDIS_AUTH') && config.get('REDIS_AUTH'),
