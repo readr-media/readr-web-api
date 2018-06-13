@@ -1,34 +1,34 @@
-const config = require('config')
+const config = require('../config')
 const debug = require('debug')('READR-API:middle:redis')
 const isProd = process.env.NODE_ENV === 'production'
 const RedisConnectionPool = require('redis-connection-pool')
 
 const redisPoolRead = RedisConnectionPool('myRedisPoolRead', {
-  host: config.get('REDIS_READ_HOST') || '127.0.0.1',
-  port: config.get('REDIS_READ_PORT') || '6379',
-  max_clients: config.get('REDIS_MAX_CLIENT') || 50,
+  host: config.REDIS_READ_HOST || '127.0.0.1',
+  port: config.REDIS_READ_PORT || '6379',
+  max_clients: config.REDIS_MAX_CLIENT || 50,
   perform_checks: false,
   database: 0,
   options: {
-    auth_pass: config.get('REDIS_AUTH') || '',
+    auth_pass: config.REDIS_AUTH || '',
   },
 })
 
 const redisPoolWrite = isProd ? RedisConnectionPool('myRedisPoolWrite', {
-  host: config.get('REDIS_WRITE_HOST') || '127.0.0.1',
-  port: config.get('REDIS_WRITE_PORT') || '6379',
-  max_clients: config.get('REDIS_MAX_CLIENT') || 50,
+  host: config.REDIS_WRITE_HOST || '127.0.0.1',
+  port: config.REDIS_WRITE_PORT || '6379',
+  max_clients: config.REDIS_MAX_CLIENT || 50,
   perform_checks: false,
   database: 0,
   options: {
-    auth_pass: config.get('REDIS_AUTH') || '',
+    auth_pass: config.REDIS_AUTH || '',
   },
 }) : redisPoolRead
 
 class TimeoutHandler {
   constructor (callback) {
     this.isResponded = false
-    this.timeout = config.get('REDIS_CONNECTION_TIMEOUT') || 2000
+    this.timeout = config.REDIS_CONNECTION_TIMEOUT || 2000
 
     this.destroy = this.destroy.bind(this)
     this.init = this.init.bind(this)
@@ -94,14 +94,14 @@ const redisFetching = (key, callback) => {
   })
 }
 const redisWriting = (key, data, callback, timeout) => {
-  debug('Setting key/data to redis. Timeout:', timeout || config.get('REDIS_TIMEOUT') || 5000)
+  debug('Setting key/data to redis. Timeout:', timeout || config.REDIS_TIMEOUT || 5000)
   debug(decodeURIComponent(key))
   const timeoutHandler = new TimeoutHandler(callback)
   redisPoolWrite.set(decodeURIComponent(key), data, (err) => {
     if(err) {
       console.error('redis writing in fail. ', decodeURIComponent(key), err)
     } else {
-      redisPoolWrite.expire(decodeURIComponent(key), timeout || config.get('REDIS_TIMEOUT') || 5000, function(error) {
+      redisPoolWrite.expire(decodeURIComponent(key), timeout || config.REDIS_TIMEOUT || 5000, function(error) {
         if(error) {
           console.error('failed to set redis expire time. ', decodeURIComponent(key), err)
         } else {
