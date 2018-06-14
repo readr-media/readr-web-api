@@ -3,6 +3,7 @@ const { mapKeys, pick, get, nth, } = require('lodash')
 const { handlerError, } = require('../../comm')
 const { API_PROTOCOL, API_HOST, API_PORT, API_TIMEOUT, POST_PUBLISH_STATUS, POST_TYPE, COMMENT_PUBLIC_VALID_PATH_PARAM, } = require('../../config')
 const { setupClientCache, } = require('../comm')
+const { getComment, sendComment, } = require('../comment/comm.js')
 const debug = require('debug')('READR-API:api:public')
 const express = require('express')
 const router = express.Router()
@@ -109,32 +110,8 @@ const validateResourceURL = (req, res, next) => {
   }
 }
 
-const getComment = (req, res, next) => {
-  const url = `${apiHost}${req.url}`
-  superagent
-  .get(url)
-  .timeout(API_TIMEOUT)
-  .end((e, r) => {
-    req.comment = { e, r, }
-    next()
-  })
-}
 
-router.get('/comment', [ validateResourceURL, setupClientCache, getComment, ], (req, res) => {
-  debug('Got a comment call!', req.url)
-  const { e, r, } = req.comment
-  if (!e && r) {
-    debug('respaonse:')
-    debug(r.body)
-    const resData = JSON.parse(r.text)
-    res.json(resData)
-  } else {
-    const err_wrapper = handlerError(e, r)
-    res.status(err_wrapper.status).json(err_wrapper.text)      
-    console.error(`Error occurred during fetch comment data from : ${req.url}`)
-    console.error(e)
-  }  
-})
+router.get('/comment', [ validateResourceURL, setupClientCache, getComment(apiHost), ], sendComment)
 
 router.get('/profile/:id', (req, res, next) => {
   const id = req.params.id
