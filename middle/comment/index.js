@@ -2,6 +2,7 @@ const { get, } = require('lodash')
 const { handlerError, } = require('../../comm')
 const { publishAction, } = require('../../comm/gcs.js')
 const { setupClientCache, } = require('../comm')
+const { getComment, sendComment, } = require('./comm.js')
 const config = require('../../config')
 const debug = require('debug')('READR-API:api:comment')
 const express = require('express')
@@ -9,17 +10,6 @@ const superagent = require('superagent')
 const router = express.Router()
 
 const apiHost = config.API_PROTOCOL + '://' + config.API_HOST + ':' + config.API_PORT
-
-const getComment = (req, res, next) => {
-  const url = `${apiHost}/comment${req.url}`
-  superagent
-  .get(url)
-  .timeout(config.API_TIMEOUT)
-  .end((e, r) => {
-    req.comment = { e, r, }
-    next()
-  })
-}
 
 const getCommentSingle = (req, res, next) => {
   debug('Going to fetch this comment first.', req.body.id)
@@ -73,21 +63,7 @@ const getCommentSingle = (req, res, next) => {
 //   }
 // }, insertIntoRedis)
 
-router.get('/', [ setupClientCache, getComment, ], (req, res) => {
-  debug('Got a comment call!', req.url)
-  const { e, r, } = req.comment
-  if (!e && r) {
-    debug('respaonse:')
-    debug(r.body)
-    const resData = JSON.parse(r.text)
-    res.json(resData)
-  } else {
-    const err_wrapper = handlerError(e, r)
-    res.status(err_wrapper.status).json(err_wrapper.text)      
-    console.error(`Error occurred during fetch comment data from : ${req.url}`)
-    console.error(e)
-  }  
-})
+router.get('/', [ setupClientCache, getComment(`${apiHost}/comment`), ], sendComment)
 
 router.delete('/', (req, res, next) => {
   req.body.id = req.body.ids[ 0 ]

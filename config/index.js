@@ -6,6 +6,7 @@ module.exports = {
   API_HOST: config.has('API_HOST') && config.get('API_HOST'),
   API_PORT: config.has('API_PORT') && config.get('API_PORT'),
   API_TIMEOUT: config.has('API_TIMEOUT') && config.get('API_TIMEOUT'),
+  COMMENT_PUBLIC_VALID_PATH_PARAM: config.has('COMMENT_PUBLIC_VALID_PATH_PARAM') && config.get('COMMENT_PUBLIC_VALID_PATH_PARAM'),
   DISPOSABLE_TOKEN_WHITE_LIST: config.has('DISPOSABLE_TOKEN_WHITE_LIST') && config.get('DISPOSABLE_TOKEN_WHITE_LIST'),
   DOMAIN: config.has('DOMAIN') && config.get('DOMAIN'),
   ENDPOINT_SECURE: config.has('ENDPOINT_SECURE') && config.get('ENDPOINT_SECURE'),
