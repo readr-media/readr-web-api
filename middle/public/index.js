@@ -1,5 +1,5 @@
 const { fetchFromRedis, redisFetching, redisWriting, insertIntoRedis, } = require('../redis')
-const { mapKeys, pick, get, nth, } = require('lodash')
+const { mapKeys, pick, get, nth, isEmpty, } = require('lodash')
 const { handlerError, } = require('../../comm')
 const { API_PROTOCOL, API_HOST, API_PORT, API_TIMEOUT, POST_PUBLISH_STATUS, POST_TYPE, COMMENT_PUBLIC_VALID_PATH_PARAM, } = require('../../config')
 const { setupClientCache, } = require('../comm')
@@ -10,7 +10,6 @@ const router = express.Router()
 const superagent = require('superagent')
 const publicQueryValidation = require('../../services/validate')
 const schema = require('./schema')
-const qs = require('qs')
 const pathToRegexp = require('path-to-regexp')
 const url = require('url')
 
@@ -87,10 +86,8 @@ const fetchAndConstructPosts = (req, res, next) => {
   }
 }
 
-const validateResourceURL = (req, res, next) => {
-  const query = qs.parse(req.url)
-  const resource = get(query, 'resource', '')
-  const resourcePath = url.parse(resource).pathname
+const validateResourceURLResult = (resourceURL) => {
+  const resourcePath = url.parse(resourceURL).pathname
   const re = pathToRegexp('/:param/:subParam?')
 
   if (resourcePath) {
@@ -98,20 +95,30 @@ const validateResourceURL = (req, res, next) => {
     const param = nth(resourcePathParams, 1)
     if (param) {
       if (COMMENT_PUBLIC_VALID_PATH_PARAM.includes(param)) {
-        next()
+        return { status: 200, message: `Your resource url: '${resourceURL}' is valid, continue fetching comments.` }
       } else {
-        res.status(403).end(`Invalid param: '${param}' of resource path: '${resourcePath}' in resource asset url: '${req.url}'`)
+        return { status: 403, message: `Invalid param: '${param}' of resource path: '${resourcePath}' in resource url: '${resourceURL}'.`, }
       }
     } else {
-      res.status(404).end(`Cannot find param of resource path: '${resourcePath}' in resource asset url: '${req.url}'`)
+      return { status: 404, message: `Cannot find param of resource path: '${resourcePath}' in resource url: '${resourceURL}'.`, }
     }
   } else {
-    res.status(404).end(`Cannot find resource path of resource: '${resource}' in resource asset url: '${req.url}'`)
-  }
+    return { status: 404, message: `Cannot find resource path of resource: '${resourcePath}' in resource url: '${resourceURL}'.`, }
+  } 
 }
 
+const validateResourceURL = (req, res, next) => {
+  const query = url.parse(req.url, true).query
+  const parent = get(query, 'parent', '')
+  const resource = get(query, 'resource', '')
 
-router.get('/comment', [ validateResourceURL, setupClientCache, getComment(apiHost), ], sendComment)
+  // Determine fetching sub comments or not, if yes, get the subcomments' resource url and validate it.
+  const resourceURL = isEmpty(parent) ? resource : get(JSON.parse(get(req, [ 'comment', 'r', 'text' ], '')), [ '_items', '0', 'resource', ], '')
+  const { status, message } = validateResourceURLResult(resourceURL)
+  status === 200 ? next() : res.status(status).end(message)
+}
+
+router.get('/comment', [ setupClientCache, getComment(apiHost), validateResourceURL, ], sendComment)
 
 router.get('/profile/:id', (req, res, next) => {
   const id = req.params.id
