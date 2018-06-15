@@ -1,7 +1,7 @@
 const { fetchFromRedis, redisFetching, redisWriting, insertIntoRedis, } = require('../redis')
 const { mapKeys, pick, get, nth, } = require('lodash')
 const { handlerError, } = require('../../comm')
-const { API_PROTOCOL, API_HOST, API_PORT, API_TIMEOUT, POST_PUBLISH_STATUS, POST_TYPE, COMMENT_PUBLIC_VALID_PATH_PARAM, } = require('../../config')
+const { API_PROTOCOL, API_HOST, API_PORT, API_TIMEOUT, API_DEADLINE, POST_PUBLISH_STATUS, POST_TYPE, COMMENT_PUBLIC_VALID_PATH_PARAM, } = require('../../config')
 const { setupClientCache, } = require('../comm')
 const { getComment, sendComment, } = require('../comment/comm.js')
 const debug = require('debug')('READR-API:api:public')
@@ -44,7 +44,8 @@ const fetchAndConstructMembers = (req, res) => {
           const responseSend = itemsCheck(mem)
           res.json(responseSend)
         } else {
-          res.status(response.status).send('{\'error\':' + e + '}')
+          const err_wrapper = handlerError(e, response)
+          res.status(err_wrapper.status).send('{\'error\':' + e + '}')
           console.error(`Error occurred when fetching data from: member ${req.url}`)
           console.error(e)
         }
@@ -62,7 +63,10 @@ const fetchAndConstructPosts = (req, res, next) => {
   } else {
     superagent
       .get(url)
-      .timeout(API_TIMEOUT)
+      .timeout({
+        response: API_TIMEOUT,  // Wait 5 seconds for the server to start sending,
+        deadline: API_DEADLINE || 60000, // but allow 1 minute for the file to finish loading.
+      })      
       .end((e, r) => {
         if (!e && r) {
           const resData = JSON.parse(r.text)
@@ -79,7 +83,8 @@ const fetchAndConstructPosts = (req, res, next) => {
 
           res.json(resData)
         } else {
-          res.status(r.status).json(e)
+          const err_wrapper = handlerError(e, r)
+          res.status(err_wrapper.status).json(err_wrapper.text)
           console.error(`Error occurred during fetching public post data from : ${url}`)
           console.error(e)
         }
@@ -186,8 +191,7 @@ router.get('/posts', publicQueryValidation.validate(schema.posts), (req, res, ne
     })
   }
   next()
-},
-fetchFromRedis, fetchAndConstructPosts, insertIntoRedis)
+}, fetchFromRedis, fetchAndConstructPosts, insertIntoRedis)
 
 router.get('/posts/hot', (req, res) => {
   const url = `${apiHost}${req.url}`
@@ -312,7 +316,8 @@ router.get('/videos', publicQueryValidation.validate(schema.videos), (req, res, 
           const resData = JSON.parse(r.text)
           res.json(resData)
         } else {
-          res.json(e)
+          const err_wrapper = handlerError(e, r)
+          res.status(err_wrapper.status).json(err_wrapper.text)          
           console.error(`Error occurred during fetching public data from : ${url}`)
           console.error(e)  
         }
@@ -347,7 +352,8 @@ router.get('/videos/count', (req, res, next) => {
           const resData = JSON.parse(r.text)
           res.json(resData)
         } else {
-          res.json(e)
+          const err_wrapper = handlerError(e, r)
+          res.status(err_wrapper.status).json(err_wrapper.text)    
           console.error(`Error occurred during fetching public data from : ${url}`)
           console.error(e)  
         }

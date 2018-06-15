@@ -11,6 +11,7 @@ const { JSDOM, } = require("jsdom")
 const { camelizeKeys, } = require('humps')
 const { authorize, constructScope, fetchPermissions, } = require('./services/perm')
 const { fetchFromRedis, insertIntoRedis, redisFetching, } = require('./middle/redis')
+const { handlerError, } = require('./comm')
 const { initBucket, makeFilePublic, uploadFileToBucket, deleteFilesInFolder, } = require('./comm/gcs.js')
 const { processImage, } = require('./comm/sharp.js')
 const { setupClientCache } = require('./middle/comm')
@@ -168,12 +169,13 @@ router.get('/posts', authVerify, (req, res) => {
       const resData = JSON.parse(resp.text)
       return res.json(resData)
     } else {
-      if (err.status === 404) {
+      const err_wrapper = handlerError(err, resp)
+      if (err_wrapper.status == 404) {
         res.status(200).json([])
       } else {
-        res.json(err)
-        console.error(`error during fetch data from : ${url}`)
-        console.error(err) 
+        res.status(err_wrapper.status).json(err_wrapper.text)      
+        console.error(`Error occurred during fetch comment data from : ${req.url}`)
+        console.error(e)      
       }
     }
   })
@@ -480,7 +482,8 @@ router.route('*')
             const resData = JSON.parse(r.text)
             res.json(resData)
           } else {
-            res.json(e)
+            const err_wrapper = handlerError(e, r)
+            res.status(err_wrapper.status).json(err_wrapper.text)
             console.error(`error during fetch data from : ${url}`)
             console.error(e)  
           }
