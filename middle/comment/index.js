@@ -64,7 +64,7 @@ const getCommentSingle = (req, res, next) => {
 //   }
 // }, insertIntoRedis)
 
-router.get('/', (req, res, next) => {
+router.get('/', setupClientCache, (req, res, next) => {
   /**
    * Going to check if the resource is type of "memo"
    */
@@ -109,7 +109,7 @@ router.get('/', (req, res, next) => {
   } else {
     next()
   }
-}, [ setupClientCache, getComment(`${apiHost}/comment`), ], sendComment)
+}, [ getComment(`${apiHost}/comment`), sendComment, ])
 
 router.delete('/', (req, res, next) => {
   req.body.id = req.body.ids[ 0 ]
