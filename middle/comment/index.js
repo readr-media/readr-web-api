@@ -3,6 +3,7 @@ const { handlerError, } = require('../../comm')
 const { publishAction, } = require('../../comm/gcs.js')
 const { setupClientCache, } = require('../comm')
 const { getComment, sendComment, } = require('./comm.js')
+const { checkPerm, } = require('../memo/qulification')
 const config = require('../../config')
 const debug = require('debug')('READR-API:api:comment')
 const express = require('express')
@@ -63,7 +64,52 @@ const getCommentSingle = (req, res, next) => {
 //   }
 // }, insertIntoRedis)
 
-router.get('/', [ setupClientCache, getComment(`${apiHost}/comment`), ], sendComment)
+router.get('/', (req, res, next) => {
+  /**
+   * Going to check if the resource is type of "memo"
+   */
+  const resource = get(req, 'query.resource')
+  debug('resource')
+  debug('resource', resource)
+  debug('resource')
+  debug('resource')
+  const exp = /(?:\/series\/([A-Za-z0-9.\-_]*)\/([0-9]+))/
+  const checkedResource = resource.match(exp)
+  if (checkedResource) {
+    /**
+     * The resource is "memo", so we're gonna check the permission of read.
+     */
+    const member = get(req, 'user.id')
+    const proj = get(req, 'query.resource_id')
+    const proj_numberized = !isNaN(proj)
+      ? typeof(proj) === 'number'
+      ? proj
+      : Number(get(req, 'query.resource_id'))
+      : false
+    debug('Got you! memo comment!', member, proj_numberized)
+    if (proj_numberized) {
+      checkPerm(member, [ proj_numberized, ])
+        .then(isAnyUnauthorized => {
+          debug('Permission:', `${proj_numberized}-${isAnyUnauthorized}`)
+          if (isAnyUnauthorized) {
+            next()
+          } else {
+            res.status(403).send('No permission to fetch comment.')
+          }
+        })
+        .catch(err => {
+          const err_wrapper = handlerError(err)
+          res.status(err_wrapper.status).json(err_wrapper.text)      
+          console.error(`Error occurred during fetching comment: ${proj_numberized}(project)-${member}(member)`)
+          console.error(err)            
+        })
+    } else {
+      res.status(400).send('Bad Request.')
+    }
+  } else {
+    next()
+  }
+}, [ setupClientCache, getComment(`${apiHost}/comment`), ], sendComment)
 
 router.delete('/', (req, res, next) => {
   req.body.id = req.body.ids[ 0 ]
