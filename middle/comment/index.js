@@ -69,12 +69,9 @@ router.get('/', setupClientCache, (req, res, next) => {
    * Going to check if the resource is type of "memo"
    */
   const resource = get(req, 'query.resource')
-  debug('resource')
-  debug('resource', resource)
-  debug('resource')
-  debug('resource')
   const exp = /(?:\/series\/([A-Za-z0-9.\-_]*)\/([0-9]+))/
-  const checkedResource = resource.match(exp)
+  const checkedResource = resource && resource.match(exp)
+
   if (checkedResource) {
     /**
      * The resource is "memo", so we're gonna check the permission of read.
