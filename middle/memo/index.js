@@ -19,6 +19,8 @@ router.get('/', publicQueryValidation.validate(schema.memos), (req, res) => {
   debug('project_id', project_id, typeof(project_id))
 
   const url = `${apiHost}/memos${req.url}`
+  debug('url:')
+  debug(url)
   superagent
   .get(url)
   .timeout(API_TIMEOUT)
@@ -50,7 +52,7 @@ router.get('/:id', (req, res) => {
   fetchMemoSingle(req.params.id)
   .then(memo => {
     memo_data = memo
-    const proj_id = get(memo_data, '_items.project_id', '')
+    const proj_id = get(memo_data, '_items.0.project_id', '')
     debug('proj_id', proj_id)
     return checkPerm(get(req, 'user.id'), [ proj_id, ])
   })
