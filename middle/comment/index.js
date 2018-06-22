@@ -26,7 +26,10 @@ const getCommentSingle = (req, res, next) => {
 const goUpdateRedis = req => {
   setTimeout(() => {
     const url = `${apiHost}/comment${req.url}`
-    getCommentFromApi(url)
+    getCommentFromApi(url).then(() => {
+      debug('Setupped comment to Redis successfuly!!')
+      debug(`> ${url}`)
+    })
   }, 1000)
 }
 
@@ -117,7 +120,7 @@ router.get('/', setupClientCache, (req, res, next) => {
 router.delete('/', (req, res, next) => {
   req.body.id = req.body.ids[ 0 ]
   next()
-}, getCommentSingle, (req, res) => {
+}, getCommentSingle, (req, res, next) => {
   debug('Got a comment del call!', req.url)
   debug(req.params)
   debug(req.body)
@@ -131,6 +134,7 @@ router.delete('/', (req, res, next) => {
     debug('user', userId)
     if (userId !== author && config.ROLE_MAP.ADMIN !== userRole) { return res.status(403).send(`Forbidden.`) }
 
+    delete req.body.id
     publishAction(req.body, {
       type: 'comment',
       action: 'delete',
@@ -138,6 +142,7 @@ router.delete('/', (req, res, next) => {
       debug('result:')
       debug(result)
       res.send({ status: 200, text: 'deleting a comment successfully.', })
+      next()
     }).catch(error => {
       const err_wrapper = handlerError(error)
       res.status(err_wrapper.status).json(err_wrapper.text)      
@@ -151,7 +156,7 @@ router.delete('/', (req, res, next) => {
     console.error(e)   
   }
   
-})
+}, goUpdateRedis)
 
 router.post('/', (req, res, next) => {
   debug('Got a comment post call!', req.url)
@@ -206,7 +211,7 @@ router.post('/report', (req, res) => {
   })  
 })
 
-router.put('/', getCommentSingle, (req, res) => {
+router.put('/', getCommentSingle, (req, res, next) => {
   debug('Got a comment put call!', req.url)
   debug(req.body)
 
@@ -227,6 +232,7 @@ router.put('/', getCommentSingle, (req, res) => {
       debug('result:')
       debug(result)
       res.send({ status: 200, text: 'Updating a comment successfully.', })
+      next()
     }).catch(error => {
       const err_wrapper = handlerError(error)
       res.status(err_wrapper.status).json(err_wrapper.text)      
@@ -239,9 +245,9 @@ router.put('/', getCommentSingle, (req, res) => {
     console.error(`Error occurred during Updating comment: ${req.body.id}`)
     console.error(e)      
   }
-})
+}, goUpdateRedis)
 
-router.put('/hide', (req, res) => {
+router.put('/hide', (req, res, next) => {
   debug('Got a comment hide call!', req.url)
   debug(req.body)
   const userRole = get(req, 'user.role')
@@ -254,17 +260,18 @@ router.put('/hide', (req, res) => {
   })
   publishAction(payload, {
     type: 'comment',
-    action: 'pubstatus',
+    action: 'putstatus',
   }).then(result => {
     debug('result:')
     debug(result)
     res.send({ status: 200, text: 'hidding a comment successfully.', })
+    next()
   }).catch(error => {
     const err_wrapper = handlerError(error)
     res.status(err_wrapper.status).json(err_wrapper.text)      
     console.error(`Error occurred during hidding comment: ${payload}`)
     console.error(error)    
   })
-})
+}, goUpdateRedis)
 
 module.exports = router
