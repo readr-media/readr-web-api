@@ -2,7 +2,7 @@ const { get, } = require('lodash')
 const { handlerError, } = require('../../comm')
 const { publishAction, } = require('../../comm/gcs.js')
 const { setupClientCache, } = require('../comm')
-const { getComment, sendComment, } = require('./comm.js')
+const { getComment, getCommentFromApi, sendComment, } = require('./comm.js')
 const { checkPerm, } = require('../memo/qulification')
 const config = require('../../config')
 const debug = require('debug')('READR-API:api:comment')
@@ -22,6 +22,12 @@ const getCommentSingle = (req, res, next) => {
     req.comment = { e, r, }
     next()
   })
+}
+const goUpdateRedis = req => {
+  setTimeout(() => {
+    const url = `${apiHost}/comment${req.url}`
+    getCommentFromApi(url)
+  }, 1000)
 }
 
 // router.get('/count', fetchFromRedis, (req, res, next) => {
@@ -147,7 +153,7 @@ router.delete('/', (req, res, next) => {
   
 })
 
-router.post('/', (req, res) => {
+router.post('/', (req, res, next) => {
   debug('Got a comment post call!', req.url)
   debug(req.body)
   const author = req.user.id
@@ -164,13 +170,17 @@ router.post('/', (req, res) => {
     debug('result:')
     debug(result)
     res.send({ status: 200, text: 'Adding a new comment successfully.', })
+    /**
+     * Go next to update comment data in Redis.
+     */
+    next()
   }).catch(error => {
     const err_wrapper = handlerError(error)
     res.status(err_wrapper.status).json(err_wrapper.text)      
     console.error(`Error occurred during adding comment: ${url}`)
     console.error(error)    
   })
-})
+}, goUpdateRedis)
 
 router.post('/report', (req, res) => {
   debug('Got a comment report post call!', req.url)

@@ -1,18 +1,44 @@
-const superagent = require('superagent')
 const debug = require('debug')('READR-API:api:comment')
-const { handlerError, } = require('../../comm')
+const superagent = require('superagent')
 const { API_TIMEOUT, } = require('../../config')
+const { handlerError, } = require('../../comm')
+const { redisFetching, redisWriting, } = require('../redis')
+
+const getCommentBase = (url) => new Promise((resolve, reject) => {
+  redisFetching(url, ({ error, data, }) => {
+    if (!error && data) {
+      debug('Fetch comment data from Redis.')
+      debug('>', url)
+      const comment_data = JSON.parse(data)
+      resolve(comment_data)
+    } else {      
+      reject()
+    }
+  })
+})
+
+const getCommentFromApi = (url) => new Promise(resolve => {
+  superagent
+  .get(url)
+  .timeout(API_TIMEOUT)
+  .end((e, r) => {
+    !e && redisWriting(url, JSON.stringify({ e, r, }))
+    resolve({ e, r, })
+  })
+})
 
 const getComment = (path) => {
   return (req, res, next) => {
     const url = `${path}${req.url}`
-    superagent
-    .get(url)
-    .timeout(API_TIMEOUT)
-    .end((e, r) => {
-      req.comment = { e, r, }
+    getCommentBase(url)
+    .then(comment => {
+      req.comment = comment
       next()
     })
+    .catch(() => getCommentFromApi(url).then(comment => {
+      req.comment = comment
+      next()
+    }))
   }
 }
 
@@ -20,7 +46,7 @@ const sendComment = (req, res) => {
   debug('Got a comment call!', req.url)
   const { e, r, } = req.comment
   if (!e && r) {
-    debug('respaonse:')
+    debug('response:')
     debug(r.body)
     const resData = JSON.parse(r.text)
     res.json(resData)
@@ -34,5 +60,6 @@ const sendComment = (req, res) => {
 
 module.exports = {
   getComment,
+  getCommentFromApi,
   sendComment,
 }
