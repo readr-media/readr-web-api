@@ -96,7 +96,7 @@ const fetchPromise = (url) => {
 
 router.use('/activate', verifyToken, require('./middle/member/activation'))
 router.use('/comment', [ authVerify, authorize, ], require('./middle/comment'))
-router.use('/following', require('./middle/following'))
+router.use('/following', [ authVerify, authorize, ], require('./middle/following'))
 router.use('/initmember', authVerify, require('./middle/member/initMember'))
 router.use('/invitation', authVerify, require('./middle/member/invitation'))
 router.use('/member/notification', authVerify, require('./middle/member/notification'))
