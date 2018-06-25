@@ -12,15 +12,11 @@ const superagent = require('superagent')
 
 const apiHost = API_PROTOCOL + '://' + API_HOST + ':' + API_PORT
 
-router.post('/byuser', (req, res, next) => {
-  req.url = '/following/byuser'
-  next()
-}, [ authVerify, authorize, ], (req, res) => {
-  debug('Got a /following/byuser call.')
-  const url = `${apiHost}/following/byuser`
+router.get('/user', (req, res) => {
+  debug('Got a /following/user call.', req.url)
+  const url = `${apiHost}/following${req.url}`
   superagent
   .get(url)
-  .send(req.body)
   .timeout(API_TIMEOUT)
   .end((err, response) => {
     if (!err && response) {
@@ -38,22 +34,15 @@ router.post('/byuser', (req, res, next) => {
   })
 })
 
-router.post('/byresource', (req, res, next) => {
-  req.url = '/following/byresource'
-  next()
-}, [ authVerify, authorize, ], (req, res) => {
+router.get('/resource', (req, res) => {
+  debug('Got a /following/resource call.', req.url)
   if (res.redis) {
     const resData = JSON.parse(res.redis)
     res.json(resData)
   } else {
-    const url = `${apiHost}/following/byresource`
-    debug('Got a /following/byresource call')
-    debug(req.body)
-    debug('url', url)
+    const url = `${apiHost}/following${req.url}`
     superagent
     .get(url)
-    .set('Content-Type', 'application/json')
-    .send(req.body)
     .timeout(API_TIMEOUT)
     .end((err, response) => {
       if (!err && response) {
