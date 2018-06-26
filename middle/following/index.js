@@ -1,6 +1,4 @@
 const { API_PROTOCOL, API_HOST, API_PORT, API_TIMEOUT, } = require('../../config')
-const { authVerify, } = require('../member/comm')
-const { authorize, } = require('../../services/perm')
 // const { fetchFromRedis, insertIntoRedis, } = require('../redisHandler')
 const { get, } = require('lodash')
 const { handlerError, } = require('../../comm')
@@ -23,18 +21,15 @@ router.get('/user', (req, res) => {
       const resData = JSON.parse(response.text)
       res.json(resData)
     } else {
-      if (err.status === 404) {
-        res.status(404).json([])
-      } else {
-        res.json(err)
-        console.error(`Error occurred during fetch data from : ${url}`)
-        console.error(err)  
-      }
+      const err_wrapper = handlerError(err, res)
+      res.status(err_wrapper.status).send(err_wrapper.text)
+      console.error(`Error occurred  during fetch data from : ${url}`)
+      console.error(err)
     }
   })
 })
 
-router.get('/resource', (req, res) => {
+router.get('/resource', (req, res) => { // need redis
   debug('Got a /following/resource call.', req.url)
   if (res.redis) {
     const resData = JSON.parse(res.redis)
@@ -73,6 +68,7 @@ router.post('/pubsub', (req, res) => {
     type: 'follow',
     action,
   }).then(result => {
+    // need updating redis
     res.status(200).send(result)
   }).catch(error => {
     res.status(500).json(error)
