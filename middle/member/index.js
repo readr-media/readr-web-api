@@ -1,6 +1,7 @@
+const { get, } = require('lodash')
 const { handlerError, } = require('../../comm')
 const config = require('../../config')
-const debug = require('debug')('READR:api:member')
+const debug = require('debug')('READR-API:api:member')
 const express = require('express')
 const router = express.Router()
 const superagent = require('superagent')
@@ -21,7 +22,7 @@ router.put('/role', (req, res) => {
     } else {
       const err_wrapper = handlerError(err, response)
       res.status(err_wrapper.status).json(err_wrapper.text)      
-      console.error(`Error occurred during udpate member role from : ${req.body}`)
+      console.error(`Error occurred when udpating member role from : ${req.body}`)
       console.error(err)
     }
   })
@@ -29,6 +30,29 @@ router.put('/role', (req, res) => {
 
 router.put('/', (req, res, next) => {
   next()
+})
+
+router.get('/setting', (req, res, next) => {
+  debug('going to fecth personal setting for:', req.user.id)
+  const url = `${apiHost}/member/${req.user.id}`
+  superagent
+  .get(url)
+  .end((err, response) => {
+    if (!err && response) {
+      debug(response.body)
+      res.json({
+        hide_profile: get(response, 'body._items.0.hide_profile'),
+        profile_push: get(response, 'body._items.0.profile_push'),
+        post_push: get(response, 'body._items.0.post_push'),
+        comment_push: get(response, 'body._items.0.comment_push'),
+      })
+    } else {
+      const err_wrapper = handlerError(err, response)
+      res.status(err_wrapper.status).json(err_wrapper.text)      
+      console.error(`Error occurred when fetching member's personal setting: ${req.body}`)
+      console.error(err)
+    }
+  })
 })
 
 router.post('/syncavatar', (req, res) => {
