@@ -106,6 +106,7 @@ router.use('/memo', [ authVerify, authorize, setupClientCache, ], require('./mid
 router.use('/member', [ authVerify, authorize, ], require('./middle/member'))
 router.use('/register', authVerify, require('./middle/member/register'))
 router.use('/recoverpwd', require('./middle/member/recover'))
+router.use('/points', [ authVerify, authorize, ], require('./middle/points'))
 router.use('/public', require('./middle/public'))
 router.use('/search', require('./middle/search'))
 router.use('/token', require('./middle/services/token'))
@@ -141,9 +142,6 @@ router.all('/posts', [ authVerify, authorize, ], function(req, res, next) {
   next()
 })
 router.all('/tags', [ authVerify, authorize, ], function(req, res, next) {
-  next()
-})
-router.all('/points/:id', [ authVerify, authorize, ], function(req, res, next) {
   next()
 })
 

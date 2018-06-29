@@ -32,7 +32,7 @@ router.get('/', publicQueryValidation.validate(schema.memos), (req, res) => {
     } else {
       const err_wrapper = handlerError(e, r)
       res.status(err_wrapper.status).json(err_wrapper.text)      
-      console.error(`error during fetch public post data from : ${url}`)
+      console.error(`Error occurred when fecthing public post data from : ${url}`)
       console.error(e)
     }
   })
