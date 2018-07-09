@@ -58,4 +58,11 @@ router.get('/', (req, res) => {
   })
 })
 
+router.post('/', (req, res, next) => {
+  debug('Got a point reward call!!')
+  const member = req.user.id
+  req.body.member_id = member
+  next()
+})
+
 module.exports = router

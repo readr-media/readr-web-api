@@ -499,9 +499,10 @@ router.route('*')
         const resData = JSON.parse(response.text)
         res.status(200).json(resData).end()
       } else {
-        console.error('error occurred when handling a req: ', req.url)
-        console.error(err)
-        res.status(500).json(err)
+        const err_wrapper = handlerError(err, response)
+        res.status(err_wrapper.status).json(err_wrapper.text)      
+        console.error(`Error occurred when handling a post req: ${req.url}`)
+        console.error(err)        
       }
     })
   })
