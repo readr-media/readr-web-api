@@ -173,8 +173,8 @@ router.get('/posts', authVerify, (req, res) => {
         res.status(200).json([])
       } else {
         res.status(err_wrapper.status).json(err_wrapper.text)      
-        console.error(`Error occurred during fetch comment data from : ${req.url}`)
-        console.error(e)      
+        console.error(`Error occurred during fetch posts data from : ${req.url}`)
+        console.error(err)      
       }
     }
   })
