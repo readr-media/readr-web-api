@@ -7,7 +7,6 @@ const fs = require('fs')
 const jwtExpress = require('express-jwt')
 const path = require('path')
 const superagent = require('superagent')
-const { JSDOM, } = require("jsdom")
 const { camelizeKeys, } = require('humps')
 const { authorize, constructScope, fetchPermissions, } = require('./services/perm')
 const { fetchFromRedis, insertIntoRedis, redisFetching, } = require('./middle/redis')
@@ -104,6 +103,7 @@ router.use('/member/notification', authVerify, require('./middle/member/notifica
 router.use('/memos', [ authVerify, authorize, setupClientCache, ], require('./middle/memo'))
 router.use('/memo', [ authVerify, authorize, setupClientCache, ], require('./middle/memo'))
 router.use('/member', [ authVerify, authorize, ], require('./middle/member'))
+router.use('/meta', [ authVerify, authorize, ], require('./middle/meta'))
 router.use('/register', authVerify, require('./middle/member/register'))
 router.use('/recoverpwd', require('./middle/member/recover'))
 router.use('/points', [ authVerify, authorize, ], require('./middle/points'))
@@ -332,69 +332,6 @@ router.post('/deleteMemberProfileThumbnails', authVerify, (req, res) => {
   .catch(() => {
     res.status(400).send('Delete Fail').end()
   })
-})
-
-router.post('/meta', authVerify, (req, res) => {
-  if (!req.body.url) {
-    return res.status(400).end()
-  }
-  const url = req.body.url
-  const og = {}
-
-  const getMetaByHtml = () => {
-    superagent
-      .get(url)
-      .set('Accept', 'application/json, text/plain, */*')
-      .set('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36')
-      .end((err, response) => {
-        if (!err && response) {
-          const dom = new JSDOM(response.text)
-          if (dom.window.document.querySelector('meta[property="og:title"]')) {
-            og.ogTitle = dom.window.document.querySelector('meta[property="og:title"]').getAttribute("content") || ' '
-          } else if (dom.window.document.querySelector('title')) {
-            og.ogTitle = dom.window.document.querySelector('title').innerHTML || ' '
-          }
-          if (dom.window.document.querySelector('meta[property="og:description"]')) {
-            og.ogDescription = dom.window.document.querySelector('meta[property="og:description"]').getAttribute("content") || ' '
-          }
-          if (dom.window.document.querySelector('meta[property="og:image"]')) {
-            og.ogImage = dom.window.document.querySelector('meta[property="og:image"]').getAttribute("content") || ' '
-          }
-          if (dom.window.document.querySelector('meta[property="og:site_name"]')) {
-            og.ogSiteName = dom.window.document.querySelector('meta[property="og:site_name"]').getAttribute("content") || ' '
-          }
-          return res.status(200).send(og).end()
-        } else {
-          console.error(`error during fetch data from : ${req.url}`)
-          console.error(err)
-          return res.status(500).send(err)
-        }
-      })
-  }
-
-  // FB.api('oauth/access_token', {
-  //   client_id: FB_CLIENT_ID,
-  //   client_secret: FB_CLIENT_SECRET,
-  //   grant_type: 'client_credentials',
-  // }, (resp) => {
-  //     if(!resp || resp.error) {
-  //       getMetaByHtml()
-  //     } else {
-  //       FB.setAccessToken(resp.access_token)
-  //       FB.api('', { id: req.body.url, fields: 'og_object{title,description,image, site_name}', }, (response) => {
-  //         if(!response || response.error) {
-  //           getMetaByHtml()
-  //         } else {
-  //           og.ogTitle = _.get(response, 'og_object.title')
-  //           og.ogDescription = _.get(response, 'og_object.description')
-  //           og.ogImage = _.get(response, 'og_object.image[0].url')
-  //           og.ogSiteName = _.get(response, 'og_object.site_name')
-  //           return res.status(200).send(og).end()
-  //         }
-  //       })
-  //     }
-  // })
-  getMetaByHtml()
 })
 
 /**
