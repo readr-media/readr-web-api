@@ -128,7 +128,7 @@ const sendInitializingSuccessEmail = ({ email, }) => {
       公開透明在新聞編輯室能做到多大的程度？透明與參與會是找回信任的方法嗎？如果你也在乎這些問題，我們想邀請你一起來尋找<br>
       答案。</p>
       <p>目前網站正在進行封閉測試，若有使用上有任何問題，請來這裡回報：</p>
-      <p><a href="https://goo.gl/forms/zkoPKdjxacxjKAKr2">https://goo.gl/forms/zkoPKdjxacxjKAKr2</a></p>
+      <p><a href="https://goo.gl/forms/WDOqKtdcUNUpBIU32">https://goo.gl/forms/WDOqKtdcUNUpBIU32</a></p>
       <br>
       <p>READr 簡信昌 敬上</p>`,
     })  
