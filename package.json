@@ -34,7 +34,6 @@
     "google-auth-library": "^1.6.1",
     "humps": "^2.0.1",
     "joi": "^13.4.0",
-    "jsdom": "^11.11.0",
     "jsonwebtoken": "^8.2.2",
     "lodash": "^4.17.10",
     "moment": "^2.22.2",
