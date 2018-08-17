@@ -1,4 +1,4 @@
-const { fetchFromRedis, redisFetching, redisWriting, insertIntoRedis, } = require('../redis')
+const { fetchFromRedis, fetchFromRedisCmd, redisFetching, redisWriting, insertIntoRedis, } = require('../redis')
 const { mapKeys, pick, get, nth, isEmpty, } = require('lodash')
 const { handlerError, } = require('../../comm')
 const { API_PROTOCOL, API_HOST, API_PORT, API_TIMEOUT, API_DEADLINE, POST_PUBLISH_STATUS, POST_TYPE, COMMENT_PUBLIC_VALID_PATH_PARAM, } = require('../../config')
@@ -14,6 +14,8 @@ const pathToRegexp = require('path-to-regexp')
 const url = require('url')
 
 const apiHost = API_PROTOCOL + '://' + API_HOST + ':' + API_PORT
+
+const latestAmountInRedis = 20
 
 const pickInsensitiveUserInfo = (userData) => {
   return pick(userData, [ 'id', 'nickname', 'description', 'profile_image', ])
@@ -199,6 +201,37 @@ router.get('/posts', publicQueryValidation.validate(schema.posts), (req, res, ne
   }
   next()
 }, fetchFromRedis, fetchAndConstructPosts, insertIntoRedis)
+
+router.get('/posts/latest', publicQueryValidation.validate(schema.posts), (req, res, next) => {
+  req.redis_get = {
+    cmd: 'HGETALL',
+    key: 'postcache_latest',
+  }
+  next()
+}, fetchFromRedisCmd, (req, res, next) => {
+  debug('Stuff from redis:')
+  debug(res.redis)
+  const maxResult = req.query.max_result || latestAmountInRedis
+  const page = req.query.page || 1
+  const pageCanSlice = Math.floor(latestAmountInRedis / maxResult)
+  const publishStatusPostQueryString = `{"$in":[${POST_PUBLISH_STATUS.PUBLISHED}]}`
+  if (maxResult <= latestAmountInRedis && page <= pageCanSlice && res.redis && Object.values(res.redis).length > 0) {
+    const start = (page - 1) * maxResult
+    const end = start + maxResult
+    const redisData = Object.values(res.redis)
+      .map(data => JSON.parse(data))
+      .map(data => {
+        data.author = pickInsensitiveUserInfo(data.author)
+        data.updated_by = pickInsensitiveUserInfo(data.updated_by)
+        return data
+      })
+    const redisDataSliced = redisData.slice(start, end)
+    res.status(200).json({ _items: redisDataSliced })
+  } else {
+    req.url = `/posts?publish_status=${publishStatusPostQueryString}&type={"$in":[${POST_TYPE.REVIEW}, ${POST_TYPE.NEWS}]}&max_result=${maxResult}&page=${page}&sort=-published_at`
+    next()
+  }
+}, fetchFromRedis, fetchAndConstructPosts, insertIntoRedis )
 
 router.get('/posts/hot', (req, res) => {
   const url = `${apiHost}${req.url}`
