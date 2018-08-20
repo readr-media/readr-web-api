@@ -7,7 +7,7 @@ const { redisFetching, } = require('../redis')
 
 const debug = require('debug')('READR-API:api:member:comm')
 const apiHost = config.API_PROTOCOL + '://' + config.API_HOST + ':' + config.API_PORT
-const sendEmail = ({ email, content, cb, subject, token, }) => {
+const sendEmail = ({ email, content, cb, subject, token, type, }) => {
   debug({
     receiver: [ email, ],
     bcc: config.EMAIL_BCC || [],
@@ -21,6 +21,7 @@ const sendEmail = ({ email, content, cb, subject, token, }) => {
     bcc: config.EMAIL_BCC || [],
     subject,
     content,
+    type,
   })
   .end((err, res) => {
     debug('Sending done.')
