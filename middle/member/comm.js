@@ -36,6 +36,7 @@ const sendActivationMail = ({ id, email, role, type, }, cb) => {
     email,
     subject: 'READr 新聞媒體實驗邀請函',
     token: tokenForActivation,
+    type,
     cb,
     content: `<p>親愛的朋友您好，</p><br>
     <p>首先，感謝您報名參與此次 READr 的封測活動。</p><br>
@@ -76,6 +77,7 @@ const sendInvitationEmail = ({ id, email, role, type, inviter, }) => {
       email,
       subject: 'READr 新聞媒體實驗邀請函',
       token: tokenForActivation,
+      type,
       cb: (e, r) => resolve({ error: e, response: r, }),
       content: `<p>親愛的朋友您好，</p><br>
       <p>您的朋友 <span class="font-weight: bold;">${inviter || ''}</span> 為您報名參與此次 READr 的封測活動。</p>
