@@ -1,5 +1,5 @@
 const { fetchFromRedis, fetchFromRedisCmd, redisFetching, redisWriting, insertIntoRedis, } = require('../redis')
-const { mapKeys, pick, get, nth, isEmpty, } = require('lodash')
+const { mapKeys, pick, get, } = require('lodash')
 const { handlerError, } = require('../../comm')
 const { API_PROTOCOL, API_HOST, API_PORT, API_TIMEOUT, API_DEADLINE, POST_PUBLISH_STATUS, POST_TYPE, COMMENT_PUBLIC_VALID_PATH_PARAM, } = require('../../config')
 const { setupClientCache, } = require('../comm')
@@ -93,13 +93,13 @@ const fetchAndConstructPosts = (req, res, next) => {
   }
 }
 
-const validateResourceURLResult = (resourceURL) => {
+const getResourceURLValidationResult = (resourceURL) => {
   const resourcePath = url.parse(resourceURL).pathname
   const re = pathToRegexp('/:param/:subParam?')
 
   if (resourcePath) {
     const resourcePathParams = re.exec(resourcePath)
-    const param = nth(resourcePathParams, 1)
+    const param = get(resourcePathParams, 1)
     if (param) {
       if (COMMENT_PUBLIC_VALID_PATH_PARAM.includes(param)) {
         return { status: 200, message: `Your resource url: '${resourceURL}' is valid, continue fetching comments.` }
@@ -115,13 +115,17 @@ const validateResourceURLResult = (resourceURL) => {
 }
 
 const validateResourceURL = (req, res, next) => {
-  const query = url.parse(req.url, true).query
-  const parent = get(query, 'parent', '')
-  const resource = get(query, 'resource', '')
+  const getResourceURL = () => {
+    const query = url.parse(req.url, true).query
+    const parent = get(query, 'parent', '')
+    const resource = get(JSON.parse(get(query, 'resource', '[]')), 0, '')
+  
+    // Determine fetching sub comments or not, if yes, get the subcomments' resource url and validate it.
+    const resourceURL = parent === '' ? resource : get(JSON.parse(get(req, [ 'comment', 'r', 'text' ], '')), [ '_items', '0', 'resource', ], '')
+    return resourceURL
+  }
 
-  // Determine fetching sub comments or not, if yes, get the subcomments' resource url and validate it.
-  const resourceURL = isEmpty(parent) ? resource : get(JSON.parse(get(req, [ 'comment', 'r', 'text' ], '')), [ '_items', '0', 'resource', ], '')
-  const { status, message } = validateResourceURLResult(resourceURL)
+  const { status, message } = getResourceURLValidationResult(getResourceURL())
   status === 200 ? next() : res.status(status).end(message)
 }
 
