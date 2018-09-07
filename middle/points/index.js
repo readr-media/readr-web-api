@@ -1,3 +1,5 @@
+const Cookies = require('cookies')
+const config = require('../../config')
 const debug = require('debug')('READR-API:api:points')
 const express = require('express')
 const router = express.Router()
@@ -60,9 +62,39 @@ router.get('/', (req, res) => {
 
 router.post('/', (req, res, next) => {
   debug('Got a point reward call!!')
-  const member = req.user.id
-  req.body.member_id = member
-  next()
+  debug('req.url', req.url)
+
+  const member_id = req.user.id
+  const member_mail = req.user.email
+  const url = `${apiHost}/points`
+
+  const lastfour = get(req, 'body.lastfour')
+  const payload = Object.assign({}, req.body, {
+    member_id,
+    member_mail,
+  })
+  delete payload.lastfour
+
+  debug('payload', member_id)
+  debug('payload', member_mail)
+  debug('payload', lastfour)
+  debug(payload)
+
+  superagent
+  .post(url)
+  .send(payload)
+  .timeout(API_TIMEOUT)
+  .end((e, r) => {
+    if (!e && r) {
+      const resData = JSON.parse(r.text)
+      res.json(resData)
+    } else {
+      const err_wrapper = handlerError(e, r)
+      res.status(err_wrapper.status).json(err_wrapper.text)      
+      console.error(`Error occurred when depositing for member ${member}`)
+      console.error(e)
+    }
+  })  
 })
 
 module.exports = router
