@@ -91,7 +91,7 @@ router.post('/', (req, res, next) => {
     } else {
       const err_wrapper = handlerError(e, r)
       res.status(err_wrapper.status).json(err_wrapper.text)      
-      console.error(`Error occurred when depositing for member ${member}`)
+      console.error(`Error occurred when depositing for member ${member_id}`)
       console.error(e)
     }
   })  
