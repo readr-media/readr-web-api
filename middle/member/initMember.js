@@ -40,14 +40,21 @@ router.post('/', (req, res, next) => {
     })
     .end((err, response) => {
       if (!err && response) {
-        superagent
-        .put(`${apiHost}/member`)
-        .send({
+
+        const payload = {
           id: get(member, 'id'),
           nickname: req.body.nickname,
           role,
           active: 1,
-        })
+        }
+
+        if (get(config, 'MEMBER_POINT_INIT.ACTIVE', false) && get(config, 'MEMBER_POINT_INIT.POINTS')) {
+          payload.points = get(config, 'MEMBER_POINT_INIT.POINTS')
+        }
+
+        superagent
+        .put(`${apiHost}/member`)
+        .send(payload)
         .end((e, r) => {
           if (!e && r) {
             const cookies = new Cookies( req, res, {} )

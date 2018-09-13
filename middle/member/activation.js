@@ -1,7 +1,7 @@
 const _ = require('lodash')
 const Cookies = require('cookies')
 const config = require('../../config')
-const debug = require('debug')('READR:api:member:activation')
+const debug = require('debug')('READR-API:api:member:activation')
 const express = require('express')
 const jwtService = require('../../services')
 const router = express.Router()
@@ -13,11 +13,15 @@ const { setupClientCache } = require('../comm')
 const apiHost = config.API_PROTOCOL + '://' + config.API_HOST + ':' + config.API_PORT
 
 const activateMem = (member) => new Promise((resolve) => {
+
   const url = `${apiHost}/member`
   const payload = {
     id: member.id,
     role: member.role || 1,
     active: 1,
+  }
+  if (_.get(config, 'MEMBER_POINT_INIT.ACTIVE', false) && _.get(config, 'MEMBER_POINT_INIT.POINTS')) {
+    payload.points = _.get(config, 'MEMBER_POINT_INIT.POINTS')
   }
   superagent
     .put(url)
