@@ -1,9 +1,10 @@
 const { OAuth2Client, } = require('google-auth-library')
 const { get, } = require('lodash')
+const { handlerError, } = require('../../comm')
 const { redisWriting, } = require('../redis')
-const { sendActivationMail, } = require('./comm')
+const { sendActivationMail, sendInitializingSuccessEmail, } = require('./comm')
 const { API_HOST, API_PORT, API_PROTOCOL, GOOGLE_CLIENT_ID, } = require('../../config')
-const debug = require('debug')('READR:api:middle:member:register')
+const debug = require('debug')('READR-API:api:middle:member:register')
 const express = require('express')
 const router = express.Router()
 const superagent = require('superagent')
@@ -18,30 +19,52 @@ const sendRegisterReq = (req, res) => {
   const tokenShouldBeBanned = req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer' && req.headers.authorization.split(' ')[1]
   delete req.body.idToken
   delete req.body.email
-  // delete req.body.id 
+  delete req.body.id
 
   const url = `${apiHost}/register`
+  debug('Going to register to Readr.')
+  debug(req.body)
 
   superagent
   .post(url)
   .send(req.body)
   .end((err, resp) => {
     if (!err && resp) {
-      sendActivationMail({ id: req.body.mail, email: req.body.mail, type: 'member', }, (e, response, tokenForActivation) => {
-        if (!e && response) {
-          res.status(200).send({ token: tokenForActivation, })
-          /**
-           * Revoke the token
-           */
-          redisWriting(tokenShouldBeBanned, 'registered', null, 24 * 60 * 60 * 1000)
-        } else {
-          res.status(response.status).json(e)
-          console.error(`error during register: ${url}`)
-          console.error(e)
-        }
-      })
+      if (req.body.register_mode !== 'oauth-goo' && req.body.register_mode !== 'oauth-fb') {
+        sendActivationMail({ id: req.body.mail, email: req.body.mail, type: 'member', }, (e, response, tokenForActivation) => {      
+          if (!e && response) {
+            res.status(200).send({ token: tokenForActivation, })
+            /**
+             * Revoke the token
+             */
+            redisWriting(tokenShouldBeBanned, 'registered', null, 24 * 60 * 60 * 1000)
+          } else {
+            const err_wrapper = handlerError(e, response)
+            res.status(err_wrapper.status).send(JSON.parse(err_wrapper.text))
+            console.error(`error during register: ${req.body.mail} ${req.body.register_mode}`)
+            console.error(e)
+          }
+        })
+      } else {
+        sendInitializingSuccessEmail({ email: req.body.mail, }).then(({ error, }) => {
+          if (!error) {
+            debug('Sending email to notify member about initializing completion successfully.')
+            res.status(200).send('Register successfully.')
+            /**
+             * Revoke the token
+             */
+            redisWriting(tokenShouldBeBanned, 'registered', null, 24 * 60 * 60 * 1000)            
+          } else {
+            const err_wrapper = handlerError(error)
+            res.status(err_wrapper.status).send(JSON.parse(err_wrapper.text))
+            console.error(`error during register: ${req.body.mail} ${req.body.register_mode}`)
+            console.error(error)
+          }
+        })      
+      }
     } else {
-      res.status(500).json(get(err, [ 'response', 'body', ], { Error: 'Error occured.', }))
+      const err_wrapper = handlerError(err, resp)
+      res.status(err_wrapper.status).send(JSON.parse(err_wrapper.text))      
       console.error(`error during register: ${url}`)
       console.error(err)
     }
@@ -58,8 +81,8 @@ const preRigister = (req, res, next) => {
     debug('Registering by google account.')
     const verify = async () => {
       return await client.verifyIdToken({
-          idToken: req.body.idToken,
-          audience: GOOGLE_CLIENT_ID,
+        idToken: req.body.idToken,
+        audience: GOOGLE_CLIENT_ID,
       })
     }
     verify().then((ticket) => {
@@ -69,7 +92,7 @@ const preRigister = (req, res, next) => {
         res.status(403).send('Forbidden. Invalid token detected.').end()
         return
       }
-      req.body.id = payload[ 'sub' ]
+      // req.body.id = payload[ 'sub' ]
       req.body.nickname = req.body.nickname || payload[ 'name' ]
       req.body.profile_image = payload[ 'picture' ] || null
       req.body.mail = payload[ 'email' ]
@@ -85,11 +108,11 @@ const preRigister = (req, res, next) => {
     })
   } else if (req.body.register_mode === 'oauth-fb') {
     req.body.mail = req.body.email
-    req.body.id = req.body.social_id
+    // req.body.id = req.body.social_id
     next()
   } else {
     req.body.mail = req.body.email
-    req.body.id = req.body.email
+    // req.body.id = req.body.email
     req.body.register_mode = 'ordinary'
     if (req.body.role !== null && req.body.role !== undefined && !req.body.password) {
       req.body.password = 'none'
@@ -101,10 +124,14 @@ const preRigister = (req, res, next) => {
 router.post('/', preRigister, sendRegisterReq)
 router.post('/admin', (req, res, next) => {
   const url = `${apiHost}/member`
-  delete req.body.id 
+  const payload = req.body
+
+  payload.role = payload.role || 1
+  delete payload.id 
+
   superagent
     .post(url)
-    .send(req.body)
+    .send(payload)
     .end((err, resp) => {
       if (!err) {
         debug('Added member by Admin successfully.')
@@ -116,7 +143,7 @@ router.post('/admin', (req, res, next) => {
       }
     })
 }, (req, res) => {
-  sendActivationMail({ id: req.body.mail, email: req.body.mail, role: req.body.role, type: 'init', }, (e, response) => {
+  sendActivationMail({ id: req.body.mail, email: req.body.mail, role: get(req, 'body.role', 1), type: 'init', }, (e, response) => {
     if (!e && response) {
       debug('A member added by Admin')
       debug(req.body)
