@@ -49,11 +49,7 @@ const sendRegisterReq = (req, res) => {
         sendInitializingSuccessEmail({ email: req.body.mail, }).then(({ error, }) => {
           if (!error) {
             debug('Sending email to notify member about initializing completion successfully.')
-            res.status(200).send('Register successfully.')
-            /**
-             * Revoke the token
-             */
-            redisWriting(tokenShouldBeBanned, 'registered', null, 24 * 60 * 60 * 1000)            
+            res.status(200).send('Register successfully.')      
           } else {
             const err_wrapper = handlerError(error)
             res.status(err_wrapper.status).send(JSON.parse(err_wrapper.text))
