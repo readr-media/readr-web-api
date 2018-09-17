@@ -28,6 +28,27 @@ router.put('/role', (req, res) => {
   })
 })
 
+router.put('/password', (req, res) => {
+  debug('Going to setup password')
+  debug(req.body)
+  superagent
+  .put(`${apiHost}/member/password`)
+  .send({
+    id: `${req.user.id}`,
+    password: req.body.password,
+  })
+  .end((err, response) => {
+    if (!err && response) {
+      res.status(200).send('Changing password successfully.')
+    } else {
+      const err_wrapper = handlerError(err, response)
+      res.status(err_wrapper.status).json(err_wrapper.text)      
+      console.error(`Error occurred when fetching member's personal setting: ${req.body}`)
+      console.error(err)      
+    }
+  })
+})
+
 router.put('/', (req, res, next) => {
   next()
 })

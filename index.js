@@ -453,7 +453,10 @@ router.route('*')
       if (!err && response) {
         res.status(200).end()
       } else {
-        res.status(500).json(err)
+        const err_wrapper = handlerError(err, response)
+        res.status(err_wrapper.status).json(err_wrapper.text)
+        console.error(`Error occurred when put: ${url}`)
+        console.error(err)          
       }
     })
   })
