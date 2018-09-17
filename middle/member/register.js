@@ -3,13 +3,38 @@ const { get, } = require('lodash')
 const { handlerError, } = require('../../comm')
 const { redisWriting, } = require('../redis')
 const { sendActivationMail, sendInitializingSuccessEmail, } = require('./comm')
-const { API_HOST, API_PORT, API_PROTOCOL, GOOGLE_CLIENT_ID, } = require('../../config')
+const { API_HOST, API_PORT, API_PROTOCOL, GOOGLE_CLIENT_ID, MEMBER_POINT_INIT, } = require('../../config')
 const debug = require('debug')('READR-API:api:middle:member:register')
 const express = require('express')
 const router = express.Router()
 const superagent = require('superagent')
 
 const apiHost = API_PROTOCOL + '://' + API_HOST + ':' + API_PORT
+
+const giveFreePoints = memId => new Promise((resolve, reject) => {
+  /** if never setup MEMBER_POINT_INIT, dont go process the following codes. */
+  if (!get(MEMBER_POINT_INIT, 'ACTIVE', false)
+    || !get(MEMBER_POINT_INIT, 'POINTS')
+    || !memId) { return resolve() }  
+
+  debug('Goin to give init-points', get(MEMBER_POINT_INIT, 'POINTS'), 'for', memId)
+  const url = `${apiHost}/member`
+  superagent
+  .put(url)
+  .send({
+    id: memId,
+    points: get(MEMBER_POINT_INIT, 'POINTS'),
+  })
+  .end((err, response) => {
+    if (!err && response) {
+      debug('Updating point successfully.')
+      resolve()
+    } else {
+      reject(err)
+    }
+  })
+})
+
 const sendRegisterReq = (req, res) => {
   if (!req.body.email || !(req.body.password || req.body.social_id)) {
     res.status(400).send({ message: 'Please offer all requirements.', })
@@ -46,17 +71,26 @@ const sendRegisterReq = (req, res) => {
           }
         })
       } else {
-        sendInitializingSuccessEmail({ email: req.body.mail, }).then(({ error, }) => {
-          if (!error) {
-            debug('Sending email to notify member about initializing completion successfully.')
-            res.status(200).send('Register successfully.')      
-          } else {
-            const err_wrapper = handlerError(error)
-            res.status(err_wrapper.status).send(JSON.parse(err_wrapper.text))
-            console.error(`error during register: ${req.body.mail} ${req.body.register_mode}`)
-            console.error(error)
-          }
-        })      
+        const memId = get(resp.body, '_items.last_id')
+        if (!memId) {
+          for (let i = 0; i < 3; i +=1) { console.error('REGISTRING WARN: member id is missing!!!!', req.body.mail) }
+        }
+        giveFreePoints(memId)
+        .then(() => {
+          return sendInitializingSuccessEmail({ email: req.body.mail, }).then(({ error, }) => {
+            if (!error) {
+              debug('Sending email to notify member about initializing completion successfully.')
+              res.status(200).send('Register successfully.')      
+            } else {
+              const err_wrapper = handlerError(error)
+              res.status(err_wrapper.status).send(JSON.parse(err_wrapper.text))
+              console.error(`error during register: ${req.body.mail} ${req.body.register_mode}`)
+              console.error(error)
+            }
+          })      
+        }).catch(err => {
+          console.error(err)
+        })
       }
     } else {
       const err_wrapper = handlerError(err, resp)
