@@ -173,6 +173,24 @@ const verifyToken = function (req, res, next) {
   })
 }
 
+const givePoints = obj => new Promise((resolve, reject) => {
+  const url = `${apiHost}/points`
+  const payload = Object.assign({}, obj)
+  payload.object_type = config.POINT_OBJECT_TYPE.GIFT || 4,
+  debug('payload', payload)
+
+  superagent
+  .post(url)
+  .send(payload)
+  .end((error, response) => {
+    if (!error && response) {
+      resolve()
+    } else {
+      reject({ error, response })
+    }
+  })
+})
+
 const authVerify = jwtExpress({
   secret: config.JWT_SECRET,
   isRevoked: (req, payload, done) => {
@@ -188,6 +206,7 @@ const authVerify = jwtExpress({
 module.exports = {
   authVerify,
   fetchMem,
+  givePoints,
   sendActivationMail,
   sendRecoverPwdEmail,
   sendInvitationEmail,

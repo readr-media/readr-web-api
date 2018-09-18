@@ -6,7 +6,7 @@ const express = require('express')
 const jwtService = require('../../services')
 const router = express.Router()
 const superagent = require('superagent')
-const { fetchMem, } = require('./comm')
+const { fetchMem, givePoints, } = require('./comm')
 const { handlerError, } = require('../../comm')
 const { setupClientCache } = require('../comm')
 
@@ -20,16 +20,25 @@ const activateMem = (member) => new Promise((resolve) => {
     role: member.role || 1,
     active: 1,
   }
-  if (_.get(config, 'MEMBER_POINT_INIT.ACTIVE', false) && _.get(config, 'MEMBER_POINT_INIT.POINTS')) {
-    payload.points = _.get(config, 'MEMBER_POINT_INIT.POINTS')
-  }
   superagent
-    .put(url)
-    .send(payload)
-    .end((err, res) => {
-      debug('Finished avtivating the member', member.id)
-      resolve({ err, res, })
-    })
+  .put(url)
+  .send(payload)
+  .end((err, res) => {
+    debug('Finished avtivating the member', member.id)
+    resolve({ err, res, })
+    if (_.get(config, 'MEMBER_POINT_INIT.ACTIVE', false) && _.get(config, 'MEMBER_POINT_INIT.POINTS')) {
+      // payload.points = _.get(config, 'MEMBER_POINT_INIT.POINTS')
+      givePoints({
+        points: _.get(config, 'MEMBER_POINT_INIT.POINTS'),
+        member_id: member.id,
+        reason: '0',
+      }).then(() => {
+        console.error('member', member.id, 'got points', _.get(config, 'MEMBER_POINT_INIT.POINTS'))
+      }).catch(e => {
+        console.error(e)
+      })
+    }
+  })
 })
 
 const activate = (req, res) => {

@@ -1,8 +1,8 @@
 const { OAuth2Client, } = require('google-auth-library')
 const { get, } = require('lodash')
+const { givePoints, sendActivationMail, sendInitializingSuccessEmail, } = require('./comm')
 const { handlerError, } = require('../../comm')
 const { redisWriting, } = require('../redis')
-const { sendActivationMail, sendInitializingSuccessEmail, } = require('./comm')
 const { API_HOST, API_PORT, API_PROTOCOL, GOOGLE_CLIENT_ID, MEMBER_POINT_INIT, } = require('../../config')
 const debug = require('debug')('READR-API:api:middle:member:register')
 const express = require('express')
@@ -18,20 +18,16 @@ const giveFreePoints = memId => new Promise((resolve, reject) => {
     || !memId) { return resolve() }  
 
   debug('Goin to give init-points', get(MEMBER_POINT_INIT, 'POINTS'), 'for', memId)
-  const url = `${apiHost}/member`
-  superagent
-  .put(url)
-  .send({
-    id: memId,
+  return givePoints({
     points: get(MEMBER_POINT_INIT, 'POINTS'),
-  })
-  .end((err, response) => {
-    if (!err && response) {
-      debug('Updating point successfully.')
-      resolve()
-    } else {
-      reject(err)
-    }
+    member_id: memId,
+    reason: '0',
+  }).then(() => {
+    console.error('member', memId, 'got points', get(MEMBER_POINT_INIT, 'POINTS'))
+    return resolve()
+  }).catch(e => {
+    console.error(e)
+    return reject(e)
   })
 })
 
