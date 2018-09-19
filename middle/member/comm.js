@@ -35,14 +35,14 @@ const sendActivationMail = ({ id, email, role, type, }, cb) => {
   })
   sendEmail({
     email,
-    subject: 'READr 新聞媒體實驗邀請函',
+    subject: 'READr 新聞媒體實驗 帳號啟動信',
     token: tokenForActivation,
     type,
     cb,
     content: `<p>親愛的朋友您好，</p><br>
-    <p>首先，感謝您報名參與此次 READr 的封測活動。</p><br>
+    <p>首先，感謝您註冊 READr ，成為新媒體實驗的一員。</p><br>
     <p>在資訊傳播容易且方向多元的這個網路世代，READr 希望能將單向傳播的「新聞」產製過程開放，讓新聞的產製由「Reporter」、「Engineer」、「Audience」及「Designer」一起共同完成，更期許能透過讀者的參與，讓新聞內容更加完善，也希望更透明的編輯室能讓新聞傳播有更多元的方向。</p><br>
-    <p>這裏，我們誠摯地邀請您成為第一批 READr 的使用者，參與封測活動，</p>
+    <p>這裏，我們誠摯地邀請您加入 READr ，</p>
     <p>請點擊以下的連結開通您的帳號並設定密碼：</p><br>
     <a href="${config.SERVER_PROTOCOL}://${config.SERVER_HOST}${config.SERVER_PORT ? ':' + config.SERVER_PORT : ''}/api/activate/${tokenForActivation}">${config.SERVER_PROTOCOL}://${config.SERVER_HOST}${config.SERVER_PORT ? ':' + config.SERVER_PORT : ''}/api/activate/${tokenForActivation}</a><br>
     <p>期待您來與我們一同參與  READr 新聞媒體實驗。</p>
@@ -81,9 +81,9 @@ const sendInvitationEmail = ({ id, email, role, type, inviter, }) => {
       type,
       cb: (e, r) => resolve({ error: e, response: r, }),
       content: `<p>親愛的朋友您好，</p><br>
-      <p>您的朋友 <span class="font-weight: bold;">${inviter || ''}</span> 為您報名參與此次 READr 的封測活動。</p>
+      <p>您的朋友 <span class="font-weight: bold;">${inviter || ''}</span> 邀請你參與 READr 新聞媒體實驗。</p>
       <p>在資訊傳播容易且方向多元的這個網路世代，READr 希望能將單向傳播的「新聞」產製過程開放，讓新聞的產製由「Reporter」、「Engineer」、「Audience」及「Designer」一起共同完成，更期許能透過讀者的參與，讓新聞內容更加完善，也希望更透明的編輯室能讓新聞傳播有更多元的方向。</p>
-      <p>我們誠摯地邀請您參與 READr 封測活動，</p>
+      <p>我們誠摯地邀請您加入 READr，</p>
       <p>請點擊以下的連結開通您的帳號並設定密碼：</p><br>
       <a href="${config.SERVER_PROTOCOL}://${config.SERVER_HOST}${config.SERVER_PORT ? ':' + config.SERVER_PORT : ''}/api/activate/${tokenForActivation}">${config.SERVER_PROTOCOL}://${config.SERVER_HOST}${config.SERVER_PORT ? ':' + config.SERVER_PORT : ''}/api/activate/${tokenForActivation}</a><br>
       <p>期待您來與我們一同參與  READr 新聞媒體實驗。</p>
@@ -97,7 +97,7 @@ const sendInitializingSuccessEmail = ({ email, }) => {
   return new Promise(resolve => {
     sendEmail({
       email,
-      subject: 'READr 計畫給先行者的一封信',
+      subject: 'READr 發起人給用戶的第一封信',
       cb: (e, r) => resolve({ error: e, response: r, }),
       content: `<p>親愛的朋友您好，</p><br>
       <p>我是簡信昌，READr （音同：reader）計畫的主要發起人，是一個從網路業工程師轉入新聞媒體業的二年級生。<br>
@@ -120,8 +120,8 @@ const sendInitializingSuccessEmail = ({ email, }) => {
       <p>在這個沒有人能壟斷資訊的時代，新聞媒體該扮演什麼樣的角色？又該提供什麼樣的資訊給讀者？READr 是我們為了解<br>
       答問題而進行的實驗。每個人都有自己的資訊來源跟同溫層，READr 想做的不是取代，而是補充，再更進一步將這些互動帶<br>
       進編輯室裡。</p>
-      <p>我們每週會邀請活躍於不同領域的客座總編，跟讀者分享他們最近關心的事。讀者對這些議題的關切程度也將成為編輯室選題<br>
-      的重要指標。背後的計算不會只是瀏覽次數這麼簡單，還包括新聞事件背後的議題、事件與事件的關聯性等等。例如我們會看到農<br>
+      <p>我們會持續邀請活躍於不同領域的客座總編，跟讀者分享他們最近關心的事。讀者對這些議題的關切程度也將成為編輯室選題<br>
+      的重要指標。「關切程度」的計算不會只有瀏覽次數，還包括新聞事件背後的議題、事件與事件的關聯性等等。例如我們會看到農<br>
       地違建的新聞，也有一些人關心山上的非法民宿，看起來雖然都像是獨立事件，但它們都指向了國土計畫這個重大議題。</p>
       <p>因此，讀者的討論與互動會影響接下來進行專題的方向。議題形成後，記者會不定時公布報導進行的進度，也會在不影響報導<br>
       的原則下，公布取得的資料及素材。而參與開放編輯室的讀者可以隨時參與討論，記者會評估讀者提供的方向或資料，進行調查。<br>
@@ -130,8 +130,8 @@ const sendInitializingSuccessEmail = ({ email, }) => {
       嘗試尋回讀者的信任。這個社群或許有機會擺脫點閱率迷思，凝聚更多關心議題的使用者，對新聞供需兩方都會產生正向的循環。<br>
       公開透明在新聞編輯室能做到多大的程度？透明與參與會是找回信任的方法嗎？如果你也在乎這些問題，我們想邀請你一起來尋找<br>
       答案。</p>
-      <p>目前網站正在進行封閉測試，若有使用上有任何問題，請來這裡回報：</p>
-      <p><a href="https://goo.gl/forms/WDOqKtdcUNUpBIU32">https://goo.gl/forms/WDOqKtdcUNUpBIU32</a></p>
+      <p>在 READr 你可以閱讀專題報導、參與討論，促成公共議題專題的產生。亦可以透過 READr 點數，閱讀「編輯室專屬」資料，<br>
+      贊助每一篇值得追蹤的內容。很高興在今天能有你的加入，如果你對於 READr 有更多想法，歡迎來信與我們討論：<a href="mailto:readr@mirrormedia.mg">readr@mirrormedia.mg</a></p>
       <br>
       <p>READr 簡信昌 敬上</p>`,
     })  

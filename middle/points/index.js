@@ -44,6 +44,7 @@ router.get('/', (req, res) => {
   debug(req.params.type)
   const member = req.user.id
   const url = `${apiHost}/points/${member}${req.url}`
+  debug('url', url)
   superagent
   .get(url)
   .timeout(API_TIMEOUT)
