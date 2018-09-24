@@ -130,6 +130,42 @@ const validateResourceURL = (req, res, next) => {
 }
 
 router.get('/comment', [ setupClientCache, getComment(apiHost), validateResourceURL, ], sendComment)
+router.get('/home/comment', fetchFromRedis, (req, res, next) => {
+  /**
+   *  - fetching comments for homepage aside
+   *  - will call backend api `/comments/latest` 
+   *  - `/comments/latest` will return the latest comments that exclude any comment from `memo`
+   */
+
+   if (res.redis) {
+    debug('fetch comment for home from Redis.', req.url)
+    const resData = JSON.parse(res.redis)
+    res.json(resData)
+  } else {
+    const url = `${apiHost}/comments/latest`
+    superagent
+    .get(url)
+    .end((error, response) => {
+      if (!error && response) {
+        const dt = JSON.parse(response.text)
+        if (dt[ '_items' ] !== null && dt.constructor === Object) {
+          res.dataString = response.text
+          /**
+           * if data not empty, go next to save data to redis
+           */
+          next()
+        }
+        const resData = JSON.parse(response.text)
+        res.json(resData)
+      } else {
+        const err_wrapper = handlerError(error, response)
+        res.status(err_wrapper.status).json(err_wrapper.text)
+        console.error(`Error occurred during fetching public data from : ${url}`)
+        console.error(error)  
+      }
+    })
+  }
+}, insertIntoRedis)
 
 router.get('/profile/:id', (req, res, next) => {
   const id = req.params.id
