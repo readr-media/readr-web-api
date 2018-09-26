@@ -66,6 +66,7 @@ router.get('/setting', (req, res, next) => {
         profile_push: get(response, 'body._items.0.profile_push'),
         post_push: get(response, 'body._items.0.post_push'),
         comment_push: get(response, 'body._items.0.comment_push'),
+        daily_push: get(response, 'body._items.0.daily_push'),
       })
     } else {
       const err_wrapper = handlerError(err, response)
