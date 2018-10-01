@@ -4,10 +4,10 @@ const superagent = require('superagent')
 const apiHost = config.API_PROTOCOL + '://' + config.API_HOST + ':' + config.API_PORT
 const debug = require('debug')('READR-API:api:middle:memo:comm')
 
-async function fetchMemoSingle (memo_id) {
+async function fetchMemoSingle (memo_id, member_id) {
   debug('Going to fetch memo.', memo_id)
   return await new Promise((resolve, reject) => {
-    const url = `${apiHost}/memo/${memo_id}`
+    const url = `${apiHost}/memo/${memo_id}?member_id=${member_id}`
     superagent
     .get(url)
     .timeout(config.API_TIMEOUT)

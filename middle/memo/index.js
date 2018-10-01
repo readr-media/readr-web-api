@@ -18,7 +18,8 @@ router.get('/', publicQueryValidation.validate(schema.memos), (req, res) => {
   debug('user_id', user_id)
   debug('project_id', project_id, typeof(project_id))
 
-  const url = `${apiHost}/memos${req.url}`
+  let url = `${apiHost}/memos${req.url}`
+  url = req.url.indexOf('?') > -1 ? `${url}&member_id=${user_id}` : `${url}?member_id=${user_id}`
   debug('url:')
   debug(url)
   superagent
@@ -46,10 +47,11 @@ router.get('/count', (req, res) => {
 })
 router.get('/:id', (req, res) => {
   let memo_data
+  const user_id = get(req, 'user.id')
   const exp_count = /\/count/
   debug('Going to get single memo.', req.params.id)
   debug('isCount', exp_count.test(req.params.id))
-  fetchMemoSingle(req.params.id)
+  fetchMemoSingle(req.params.id, user_id)
   .then(memo => {
     memo_data = memo
     const proj_id = get(memo_data, '_items.0.project_id', '')
