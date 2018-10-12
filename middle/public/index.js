@@ -18,7 +18,7 @@ const apiHost = API_PROTOCOL + '://' + API_HOST + ':' + API_PORT
 const latestAmountInRedis = 20
 
 const pickInsensitiveUserInfo = (userData) => {
-  return pick(userData, [ 'id', 'nickname', 'description', 'profile_image', ])
+  return pick(userData, [ 'id', 'nickname', 'description', 'profile_image', 'hide_profile' ])
 }
 
 const fetchAndConstructMembers = (req, res) => {
