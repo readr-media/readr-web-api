@@ -11,6 +11,7 @@ module.exports = {
   DOMAIN: config.has('DOMAIN') && config.get('DOMAIN'),
   ENDPOINT_SECURE: config.has('ENDPOINT_SECURE') && config.get('ENDPOINT_SECURE'),
   EMAIL_BCC: config.has('EMAIL_BCC') && config.get('EMAIL_BCC'),
+  EZPAY: config.has('EZPAY') && config.get('EZPAY'),
   GCP_FILE_BUCKET: config.has('GCP_FILE_BUCKET') && config.get('GCP_FILE_BUCKET'),
   GCP_KEYFILE: config.has('GCP_KEYFILE') && path.join(process.cwd(), config.get('GCP_KEYFILE')),
   GCP_PROJECT_ID: config.has('GCP_PROJECT_ID') && config.get('GCP_PROJECT_ID'),

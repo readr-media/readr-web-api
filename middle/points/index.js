@@ -4,7 +4,8 @@ const debug = require('debug')('READR-API:api:points')
 const express = require('express')
 const router = express.Router()
 const superagent = require('superagent')
-const { API_PROTOCOL, API_HOST, API_PORT, API_TIMEOUT, } = require('../../config')
+const { API_PROTOCOL, API_HOST, API_PORT, API_TIMEOUT, POINT_OBJECT_TYPE, } = require('../../config')
+const { genInvoice, } = require('../invoice')
 const { get, } = require('lodash')
 const { handlerError, } = require('../../comm')
 
@@ -69,16 +70,20 @@ router.post('/', (req, res, next) => {
   const member_mail = req.user.email
   const url = `${apiHost}/points`
 
-  const lastfour = get(req, 'body.lastfour')
+  const invoiceItem = Object.assign({}, req.body.invoiceItem)
+  delete req.body.invoiceItem
+
   const payload = Object.assign({}, req.body, {
     member_id,
     member_mail,
   })
-  delete payload.lastfour
+
+  debug('invoiceItem:')
+  debug(invoiceItem)
 
   debug('payload', member_id)
   debug('payload', member_mail)
-  debug('payload', lastfour)
+  debug('payload', invoiceItem.lastFourNum)
   debug(payload)
 
   superagent
@@ -88,7 +93,29 @@ router.post('/', (req, res, next) => {
   .end((e, r) => {
     if (!e && r) {
       const resData = JSON.parse(r.text)
+      const transaction_id = get(resData, 'id')
       res.json(resData)
+
+      /** go next to gen invoice if object_type === POINT_OBJECT_TYPE.CLEARUP */
+      if (get(req, 'body.object_type') !== POINT_OBJECT_TYPE.CLEARUP || !transaction_id) { return }
+
+      invoiceItem.amtSales = Math.abs(payload.points || 0)
+      invoiceItem.good_name = `Readr Points: ${invoiceItem.amtSales}(points).`
+      
+      /** Reset req.body and construct invoice date. */
+      req.body = Object.assign({}, invoiceItem, {
+        items: [
+          {
+            name: invoiceItem.good_name,
+            price: invoiceItem.amtSales,
+            count: 1
+          }
+        ],
+        member_name: payload.member_name,
+        member_mail,
+        transaction_id,
+      })
+      next()
     } else {
       const err_wrapper = handlerError(e, r)
       res.status(err_wrapper.status).json(err_wrapper.text)      
@@ -96,6 +123,6 @@ router.post('/', (req, res, next) => {
       console.error(e)
     }
   })  
-})
+}, genInvoice)
 
 module.exports = router
