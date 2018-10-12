@@ -133,6 +133,7 @@ const createInvoice = data => new Promise((resolve, reject) => {
           break
         case '2':
           payload.CarrierNum = get(data, 'carrierNum', get(data, 'member_mail', '-')).trim()
+          payload.BuyerEmail = get(data, 'carrierNum', get(data, 'member_mail', '-')).trim()
           break
         default:
           delete payload.CarrierType
