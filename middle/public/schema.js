@@ -3,6 +3,11 @@ const Joi = require('joi')
 const publishStatusPostQueryString = `{"$in":[${config.POST_PUBLISH_STATUS.PUBLISHED}]}`
 
 module.exports = {
+  emotion: Joi.object().keys({
+    ids: Joi.array(),
+    resource: Joi.string().regex(/^(post|report|memo)$/),
+    emotion: Joi.string().regex(/^(like|dislike)$/)
+  }),
   members: Joi.object().keys({
     custom_editor: Joi.string().valid('true'),
     role: Joi.number().valid(config.ROLE_MAP.GUESTEDITOR),
