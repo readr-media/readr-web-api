@@ -476,11 +476,13 @@ router.route('*')
   })
 
 router.use(function (err, req, res, next) {
+  debug('Error occurred and check res._headerSent:', res._headerSent)
+  debug('res._headerSent', res._headerSent)
   if (err.name === 'UnauthorizedError' && req.url.indexOf('/status') === -1) {
-    res.status(401).send('invalid token...')
+    !res._headerSent && res.status(401).send('invalid token...')
   } else if (err && req.url.indexOf('/status') > -1) {
     if (err.name === 'UnauthorizedError') {
-      res.status(200).send(false)
+      !res._headerSent && res.status(200).send(false)
     } else {
       console.error('Error occurred when checking login status', err)
     }
