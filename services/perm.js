@@ -27,21 +27,24 @@ const fetchPermissions = () => {
     redisFetching(url, ({ error, data, }) => {
       if (!error && data) {
         debug('Got permissions from Redis secessfully')
+        console.info('Got permissions from Redis secessfully')
         resolve(JSON.parse(data))
       } else {
         debug('About to fetch permissions from api')
+        console.info('About to fetch permissions from api')
         superagent
         .get(`${apiHost}${url}`)
         .end((err, res) => {
           if (!err && res) {
             const dt = JSON.parse(res.text)
             debug('Got permissions from api sucessfully.')
+            console.info('Got permissions from api sucessfully.')
             if (Object.keys(dt).length !== 0) {
               redisWriting(url, res.text)
             }
             resolve(res.body)
           } else {
-            console.log('Fetch permissions in false...', err)
+            console.error('Fetch permissions from api in false...', err)
             reject(err)
           }
         })
