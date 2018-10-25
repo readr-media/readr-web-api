@@ -2,6 +2,7 @@ const config = require('../config')
 const debug = require('debug')('READR-API:middle:redis')
 const isProd = process.env.NODE_ENV === 'production'
 const RedisConnectionPool = require('redis-connection-pool')
+const { get, } = require('lodash')
 
 const redisPoolRead = RedisConnectionPool('myRedisPoolRead', {
   host: config.REDIS_READ_HOST || '127.0.0.1',
@@ -63,7 +64,8 @@ const redisFetching = (key, callback) => {
   const onFinished = (error, data) => {
     timeoutHandler.isResponded = true
     timeoutHandler.destroy()
-    if (timeoutHandler.timeout <= 0) { return }
+    console.info('REDIS### FETCHING RESULT FOR "', key.substring(0, 80), '..."\nREDIS### DATA LENGTH:', get(data, 'length'), '\nREDIS### ANY ERROR?', error || false)
+    if (timeoutHandler.timeout <= 0) {return }
     callback && callback({ error, data, })
   }
   redisPoolRead.get(decodeURIComponent(key), (error, data) => {
@@ -102,6 +104,7 @@ const redisWriting = (key, data, callback, timeout) => {
       console.error('redis writing in fail. ', decodeURIComponent(key), err)
     } else {
       redisPoolWrite.expire(decodeURIComponent(key), timeout || config.REDIS_TIMEOUT || 5000, function(error) {
+        console.info('REDIS### DONE FOR WRITING "', key.substring(0, 80), '..."\nREDIS### ANY ERROR?', error || false)
         if(error) {
           console.error('failed to set redis expire time. ', decodeURIComponent(key), err)
         } else {
@@ -120,6 +123,7 @@ const redisFetchCmd = (cmd, key, field, callback) => {
   const onFinished = (error, data) => {
     timeoutHandler.isResponded = true
     timeoutHandler.destroy()
+    console.info('REDIS### FETCHING RESULT FOR', cmd, key, field, '\nREDIS### DATA LENGTH:', get(data, 'length'), '\nREDIS### ANY ERROR?', error || false)
     if (timeoutHandler.timeout <= 0) { return }
     callback && callback({ error, data, })
   }
@@ -132,6 +136,7 @@ const redisWriteCmd = (cmd, key, value, callback) => {
   const onFinished = (error, data) => {
     timeoutHandler.isResponded = true
     timeoutHandler.destroy()
+    console.info('REDIS### DONE FOR WRITING', cmd, key, '\nREDIS### ANY ERROR?', error || false)
     if (timeoutHandler.timeout <= 0) { return }
     callback && callback({ error, data, })
   }
