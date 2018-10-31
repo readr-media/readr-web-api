@@ -89,7 +89,7 @@ router.post('/', (req, res, next) => {
   superagent
   .post(url)
   .send(payload)
-  .timeout(API_TIMEOUT)
+  // .timeout(API_TIMEOUT)
   .end((e, r) => {
     if (!e && r) {
       const resData = JSON.parse(r.text)
