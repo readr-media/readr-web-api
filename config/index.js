@@ -40,11 +40,6 @@ module.exports = {
   JWT_ISSUER: config.has('JWT_ISSUER') && config.get('JWT_ISSUER'),
   JWT_EXPIRY: config.has('JWT_EXPIRY') && config.get('JWT_EXPIRY'),
   JWT_ALG: config.has('JWT_ALG') && config.get('JWT_ALG'),
-  TALK_DB: config.has('TALK_DB') && config.get('TALK_DB'),
-  TALK_SERVER: config.has('TALK_SERVER') && config.get('TALK_SERVER'),
-  TALK_SERVER_PROTOCOL: config.has('TALK_SERVER_PROTOCOL') && config.get('TALK_SERVER_PROTOCOL'),
-  TALK_SERVER_HOST: config.has('TALK_SERVER_HOST') && config.get('TALK_SERVER_HOST'),
-  TALK_SERVER_PORT: config.has('TALK_SERVER_PORT') && config.get('TALK_SERVER_PORT'),
 
   IMAGE_UPLOAD_QUALITY_JPEG: config.has('IMAGE_UPLOAD_QUALITY_JPEG') && config.get('IMAGE_UPLOAD_QUALITY_JPEG'),
   IMAGE_UPLOAD_QUALITY_PNG: config.has('IMAGE_UPLOAD_QUALITY_PNG') && config.get('IMAGE_UPLOAD_QUALITY_PNG'),
