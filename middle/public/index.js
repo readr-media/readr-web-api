@@ -365,7 +365,21 @@ router.get('/posts/latest', publicQueryValidation.validate(schema.posts), (req, 
     const redisDataSliced = redisData.slice(start, end)
     res.status(200).json({ _items: redisDataSliced })
   } else {
-    req.url = `/posts?publish_status=${publishStatusPostQueryString}&type={"$in":[${POST_TYPE.REVIEW}, ${POST_TYPE.NEWS}]}&max_result=${maxResult}&page=${page}&sort=-published_at`
+    const showAuthor = req.query.show_author || 'true'
+    const showUpdater = req.query.show_updater || 'true'
+    const showTag = req.query.show_tag || 'true'
+    const showComment = req.query.show_comment || 'true'
+    req.url = 
+      `/posts?publish_status=${publishStatusPostQueryString}&` +
+      `type={"$in":[${POST_TYPE.REVIEW}, ${POST_TYPE.NEWS}, ${POST_TYPE.REPORT}, ${POST_TYPE.MEMO}]}&` +
+      `max_result=${maxResult}&` +
+      `page=${page}&` +
+      `sort=-updated_at&` +
+      `show_author=${showAuthor}&` +
+      `show_updater=${showUpdater}&` +
+      `show_tag=${showTag}&` +
+      `show_comment=${showComment}`
+    
     next()
   }
 }, fetchFromRedis, fetchAndConstructPosts, insertIntoRedis )
