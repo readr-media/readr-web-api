@@ -369,12 +369,13 @@ router.get('/posts/latest', publicQueryValidation.validate(schema.posts), (req, 
     const showUpdater = req.query.show_updater || 'true'
     const showTag = req.query.show_tag || 'true'
     const showComment = req.query.show_comment || 'true'
+    const sort = req.query.sort || '-published_at'
     req.url = 
       `/posts?publish_status=${publishStatusPostQueryString}&` +
       `type={"$in":[${POST_TYPE.REVIEW}, ${POST_TYPE.NEWS}, ${POST_TYPE.REPORT}, ${POST_TYPE.MEMO}]}&` +
       `max_result=${maxResult}&` +
       `page=${page}&` +
-      `sort=-updated_at&` +
+      `sort=${sort}&` +
       `show_author=${showAuthor}&` +
       `show_updater=${showUpdater}&` +
       `show_tag=${showTag}&` +
