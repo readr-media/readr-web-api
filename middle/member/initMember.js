@@ -1,10 +1,10 @@
 const { fetchMem, } = require('./comm')
 const { handlerError, } = require('../../comm')
-const { sendInitializingSuccessEmail, } = require('./comm')
+const { givePoints, sendInitializingSuccessEmail, } = require('./comm')
 const { get, } = require('lodash')
 const Cookies = require('cookies')
 const config = require('../../config')
-const debug = require('debug')('READR:api:middle:member:initMember')
+const debug = require('debug')('READR-API:api:middle:member:initMember')
 const express = require('express')
 const router = express.Router()
 const superagent = require('superagent')
@@ -12,7 +12,18 @@ const superagent = require('superagent')
 const apiHost = config.API_PROTOCOL + '://' + config.API_HOST + ':' + config.API_PORT
 
 const send_email_for_initializing_successfully = (req) => {
-  sendInitializingSuccessEmail({ email: get(req, 'user.id'), }).then(({ error, }) => {
+  if (get(config, 'MEMBER_POINT_INIT.ACTIVE', false) && get(config, 'MEMBER_POINT_INIT.POINTS')) {
+    givePoints({
+      points: get(config, 'MEMBER_POINT_INIT.POINTS'),
+      member_id: get(req, 'user.id'),
+      reason: '0',
+    }).then(() => {
+      console.error('member', get(req, 'user.id'), 'got points', _.get(config, 'MEMBER_POINT_INIT.POINTS'))
+    }).catch(e => {
+      console.error(e)
+    })
+  }  
+  sendInitializingSuccessEmail({ email: get(req, 'user.mail'), }).then(({ error, }) => {
     if (!error) {
       debug('Sending email to notify member about initializing completion successfully.')
     } else {
@@ -40,18 +51,14 @@ router.post('/', (req, res, next) => {
     })
     .end((err, response) => {
       if (!err && response) {
-
+        req.user = member
         const payload = {
           id: get(member, 'id'),
           nickname: req.body.nickname,
           role,
           active: 1,
         }
-
-        if (get(config, 'MEMBER_POINT_INIT.ACTIVE', false) && get(config, 'MEMBER_POINT_INIT.POINTS')) {
-          payload.points = get(config, 'MEMBER_POINT_INIT.POINTS')
-        }
-
+  
         superagent
         .put(`${apiHost}/member`)
         .send(payload)

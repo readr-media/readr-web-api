@@ -26,6 +26,7 @@ const activateMem = (member) => new Promise((resolve) => {
   .end((err, res) => {
     debug('Finished avtivating the member', member.id)
     resolve({ err, res, })
+    debug('Going to give member default points(if it exists.)')
     if (_.get(config, 'MEMBER_POINT_INIT.ACTIVE', false) && _.get(config, 'MEMBER_POINT_INIT.POINTS')) {
       // payload.points = _.get(config, 'MEMBER_POINT_INIT.POINTS')
       givePoints({

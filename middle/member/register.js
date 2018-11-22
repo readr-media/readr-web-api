@@ -52,17 +52,15 @@ const sendRegisterReq = (req, res) => {
   .end((err, resp) => {
     if (!err && resp) {
       if (req.body.register_mode !== 'oauth-goo' && req.body.register_mode !== 'oauth-fb') {
+        res.status(200).send('Registering successfully.')
         sendActivationMail({ id: req.body.mail, email: req.body.mail, type: 'member', }, (e, response, tokenForActivation) => {      
           if (!e && response) {
-            res.status(200).send({ token: tokenForActivation, })
             /**
              * Revoke the token
              */
             redisWriting(tokenShouldBeBanned, 'registered', null, 24 * 60 * 60 * 1000)
           } else {
-            const err_wrapper = handlerError(e, response)
-            res.status(err_wrapper.status).send(JSON.parse(err_wrapper.text))
-            console.error(`error during register: ${req.body.mail} ${req.body.register_mode}`)
+            console.error(`Error occurred during sending activation email to ${req.body.mail} ${req.body.register_mode}`)
             console.error(e)
           }
         })
@@ -71,16 +69,14 @@ const sendRegisterReq = (req, res) => {
         if (!memId) {
           for (let i = 0; i < 3; i +=1) { console.error('REGISTRING WARN: member id is missing!!!!', req.body.mail) }
         }
+        res.status(200).send('Registering successfully.')
         giveFreePoints(memId)
         .then(() => {
           return sendInitializingSuccessEmail({ email: req.body.mail, }).then(({ error, }) => {
             if (!error) {
               debug('Sending email to notify member about initializing completion successfully.')
-              res.status(200).send('Register successfully.')      
             } else {
-              const err_wrapper = handlerError(error)
-              res.status(err_wrapper.status).send(JSON.parse(err_wrapper.text))
-              console.error(`error during register: ${req.body.mail} ${req.body.register_mode}`)
+              console.error(`Error occurred during sending initializing email to ${req.body.mail} ${req.body.register_mode}`)
               console.error(error)
             }
           })      
@@ -91,7 +87,7 @@ const sendRegisterReq = (req, res) => {
     } else {
       const err_wrapper = handlerError(err, resp)
       res.status(err_wrapper.status).send(JSON.parse(err_wrapper.text))      
-      console.error(`error during register: ${url}`)
+      console.error(`Error occurred during registering: ${url}`)
       console.error(err)
     }
   })
@@ -153,6 +149,7 @@ router.post('/admin', (req, res, next) => {
   const payload = req.body
 
   payload.role = payload.role || 1
+  payload.active = 0
   delete payload.id 
 
   superagent
@@ -161,6 +158,7 @@ router.post('/admin', (req, res, next) => {
     .end((err, resp) => {
       if (!err) {
         debug('Added member by Admin successfully.')
+        res.status(200).end()
         next()
       } else {
         res.status(resp.status).json(err)
@@ -171,12 +169,10 @@ router.post('/admin', (req, res, next) => {
 }, (req, res) => {
   sendActivationMail({ id: req.body.mail, email: req.body.mail, role: get(req, 'body.role', 1), type: 'init', }, (e, response) => {
     if (!e && response) {
-      debug('A member added by Admin')
+      debug(`Successfully sending activation email to ${req.body.mail}.`)
       debug(req.body)
-      res.status(200).end()
     } else {
-      res.status(response.status).json(e)
-      console.error(`Error occurred during register`)
+      console.error(`Error occurred during adding member by Admin.`)
       console.error(e)
     }
   })
