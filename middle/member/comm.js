@@ -13,6 +13,7 @@ const sendEmail = ({ email, content, cb, subject, token, type, }) => {
     bcc: config.EMAIL_BCC || [],
     subject,
     content,
+    type,
   })
   superagent
   .post(`${apiHost}/mail`)
@@ -21,7 +22,7 @@ const sendEmail = ({ email, content, cb, subject, token, type, }) => {
     bcc: config.EMAIL_BCC || [],
     subject,
     content,
-    type,
+    type: 'init',
   })
   .end((err, res) => {
     debug('Sending done.')
