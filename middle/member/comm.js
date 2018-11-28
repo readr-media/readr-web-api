@@ -22,7 +22,7 @@ const sendEmail = ({ email, content, cb, subject, token, type, }) => {
     bcc: config.EMAIL_BCC || [],
     subject,
     content,
-    type: 'init',
+    type,
   })
   .end((err, res) => {
     debug('Sending done.')
@@ -38,7 +38,7 @@ const sendActivationMail = ({ id, email, role, type, }, cb) => {
     email,
     subject: 'READr 新聞媒體實驗 帳號啟動信',
     token: tokenForActivation,
-    type,
+    type: 'init',
     cb,
     content: `<p>親愛的朋友您好，</p><br>
     <p>首先，感謝您註冊 READr ，成為新媒體實驗的一員。</p><br>
