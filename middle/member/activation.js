@@ -32,7 +32,7 @@ const activateMem = (member) => new Promise((resolve) => {
       givePoints({
         points: _.get(config, 'MEMBER_POINT_INIT.POINTS'),
         member_id: member.id,
-        reason: '0',
+        reason: '讀＋贈點',
       }).then(() => {
         console.error('member', member.id, 'got points', _.get(config, 'MEMBER_POINT_INIT.POINTS'))
       }).catch(e => {

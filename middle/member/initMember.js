@@ -16,7 +16,7 @@ const send_email_for_initializing_successfully = (req) => {
     givePoints({
       points: get(config, 'MEMBER_POINT_INIT.POINTS'),
       member_id: get(req, 'user.id'),
-      reason: '0',
+      reason: '讀＋贈點',
     }).then(() => {
       console.error('member', get(req, 'user.id'), 'got points', _.get(config, 'MEMBER_POINT_INIT.POINTS'))
     }).catch(e => {
