@@ -108,6 +108,7 @@ router.use('/register', authVerify, require('./middle/member/register'))
 router.use('/recoverpwd', require('./middle/member/recover'))
 router.use('/points', [ authVerify, authorize, ], require('./middle/points'))
 router.use('/public', require('./middle/public'))
+router.use('/project', [ authVerify, authorize, ], require('./middle/project'))
 router.use('/search', require('./middle/search'))
 router.use('/token', require('./middle/services/token'))
 router.use('/trace', (req, res, next) => {

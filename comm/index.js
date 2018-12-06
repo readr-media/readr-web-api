@@ -1,4 +1,4 @@
-const { get, } = require('lodash')
+const { get, pick, } = require('lodash')
 const debug = require('debug')('READR:api:comm')
 
 const isValidJSONString = str => {
@@ -18,6 +18,12 @@ const handlerError = (err, res) => {
     text: isValidJSONString(text) ? text : `{}`,
   }
 }
+
+const pickInsensitiveUserInfo = (userData) => {
+  return pick(userData, [ 'id', 'nickname', 'description', 'profile_image', 'hide_profile' ])
+}
+
 module.exports = {
   handlerError,
+  pickInsensitiveUserInfo,
 }

@@ -40,6 +40,9 @@ module.exports = {
     }),
     sort: Joi.string(),
   }),
+  projectContents: Joi.object().keys({
+    member_id: Joi.any().forbidden(),
+  }),
   reports: Joi.object().keys({
     active: Joi.any().forbidden(),
     max_result: Joi.number(),
