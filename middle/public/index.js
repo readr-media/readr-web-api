@@ -1,6 +1,6 @@
 const { fetchFromRedis, fetchFromRedisCmd, redisFetching, redisWriting, insertIntoRedis, } = require('../redis')
-const { mapKeys, pick, get, } = require('lodash')
-const { handlerError, } = require('../../comm')
+const { mapKeys, get, } = require('lodash')
+const { handlerError, pickInsensitiveUserInfo, } = require('../../comm')
 const { API_PROTOCOL, API_HOST, API_PORT, API_TIMEOUT, API_DEADLINE, POST_PUBLISH_STATUS, POST_TYPE, COMMENT_PUBLIC_VALID_PATH_PARAM, } = require('../../config')
 const { setupClientCache, } = require('../comm')
 const { getComment, sendComment, } = require('../comment/comm.js')
@@ -17,9 +17,6 @@ const apiHost = API_PROTOCOL + '://' + API_HOST + ':' + API_PORT
 
 const latestAmountInRedis = 20
 
-const pickInsensitiveUserInfo = (userData) => {
-  return pick(userData, [ 'id', 'nickname', 'description', 'profile_image', 'hide_profile' ])
-}
 
 const fetchAndConstructMembers = (req, res) => {
   const url = `${apiHost}${req.url}`
@@ -428,6 +425,39 @@ router.get('/projects', publicQueryValidation.validate(schema.projects), (req, r
             next()
           }
           const resData = JSON.parse(r.text)
+          res.json(resData)
+        } else {
+          const err_wrapper = handlerError(e, r)
+          res.status(err_wrapper.status).json(err_wrapper.text)
+          console.error(`Error occurred during fetching public data from : ${url}`)
+          console.error(e)  
+        }
+      })
+  }
+}, insertIntoRedis)
+
+router.get('/project/contents/:id', publicQueryValidation.validate(schema.projectContents), fetchFromRedis, (req, res, next) => {
+  const url = `${apiHost}${req.url}`
+  if (res.redis) {
+    console.log('fetch data from Redis.', req.url)
+    const resData = JSON.parse(res.redis)
+    res.json(resData)
+  } else {
+    superagent
+      .get(url)
+      .timeout(API_TIMEOUT)
+      .end((e, r) => {
+        if (!e && r) {
+          const resData = JSON.parse(r.text)
+          if (resData['_items'] !== null && resData.constructor === Object) {
+            resData['_items'].forEach(post => { post.author = pickInsensitiveUserInfo(post.author) })
+            const dt = JSON.stringify(resData)
+            res.dataString = dt
+            /**
+             * if data not empty, go next to save data to redis
+             */
+            next()
+          }
           res.json(resData)
         } else {
           const err_wrapper = handlerError(e, r)
