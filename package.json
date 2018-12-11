@@ -1,6 +1,6 @@
 {
   "name": "readr-web-api",
-  "version": "1.0.61",
+  "version": "1.0.62",
   "description": "This repo is a module built with express router in NodeJs. And this is for Readr site use.",
   "main": "dist/index.js",
   "scripts": {
