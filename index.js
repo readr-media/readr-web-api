@@ -93,6 +93,10 @@ const fetchPromise = (url) => {
   })
 }
 
+router.use('/', (req, res, next) => {
+  req.url_origin = req.url
+  next()
+})
 router.use('/activate', verifyToken, require('./middle/member/activation'))
 router.use('/comment', [ authVerify, authorize, ], require('./middle/comment'))
 router.use('/emotion', [ authVerify, authorize, ], require('./middle/emotion'))
@@ -123,26 +127,13 @@ router.use('/trace', (req, res, next) => {
   }
 }, require('./middle/gcLogger'))
 
-
-/**
- * 
- * METHOD ALL
- * 
- */
-
-router.all('/members', [ authVerify, authorize, ], function(req, res, next) {
-  debug('Got a /members request.')
-  debug('User payload:')
-  debug(req.user)
+router.use('/post', [ authVerify, authorize, ], function(req, res, next) {
   next()
 })
-router.all('/post', [ authVerify, authorize, ], function(req, res, next) {
+router.use('/posts', [ authVerify, authorize, ], function(req, res, next) {
   next()
 })
-router.all('/posts', [ authVerify, authorize, ], function(req, res, next) {
-  next()
-})
-router.all('/tags', [ authVerify, authorize, ], function(req, res, next) {
+router.use('/tags', [ authVerify, authorize, ], function(req, res, next) {
   next()
 })
 

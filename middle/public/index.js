@@ -67,19 +67,25 @@ const fetchAndConstructPosts = (req, res, next) => {
       })      
       .end((e, r) => {
         if (!e && r) {
-          const resData = JSON.parse(r.text)
+          const resData = !req.isSinglular
+            ? JSON.parse(r.text)
+            : get(JSON.parse(r.text), '_items.0.publish_status') === POST_PUBLISH_STATUS.PUBLISHED
+            ? JSON.parse(r.text)
+            : { 'Error': 'Post Not Found' }
+          debug('resData', resData)
 
-          if (resData['_items'] !== null && resData.constructor === Object) {
+          if (resData['_items'] && resData.constructor === Object) {
             resData['_items'].forEach(post => { post.author = pickInsensitiveUserInfo(post.author) })
             const dt = JSON.stringify(resData)
             res.dataString = dt
             /**
              * if data not empty, go next to save data to redis
              */
+            req.url = `/public${req.url}`
             next()
           }
 
-          res.json(resData)
+          resData['_items'] ? res.json(resData) : res.send(Object.assign({ _items: [] }, resData))
         } else {
           const err_wrapper = handlerError(e, r)
           res.status(err_wrapper.status).json(err_wrapper.text)
@@ -310,7 +316,11 @@ router.get('/memo/:id', fetchFromRedis, (req, res, next) => {
   }
 }, insertIntoRedis)
 
-router.get('/post/:postId', fetchFromRedis, fetchAndConstructPosts, insertIntoRedis)
+router.get('/post/:postId', (req, res, next) => {
+  debug('req.url', req.url)
+  req.isSinglular = true
+  next()
+}, fetchFromRedis, fetchAndConstructPosts, insertIntoRedis)
 
 router.get('/posts', publicQueryValidation.validate(schema.posts), (req, res, next) => {
   const publishStatusPostQueryString = `{"$in":[${POST_PUBLISH_STATUS.PUBLISHED}]}`
