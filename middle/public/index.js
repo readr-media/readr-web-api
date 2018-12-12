@@ -5,6 +5,7 @@ const { API_PROTOCOL, API_HOST, API_PORT, API_TIMEOUT, API_DEADLINE, POST_PUBLIS
 const { setupClientCache, } = require('../comm')
 const { getComment, sendComment, } = require('../comment/comm.js')
 const debug = require('debug')('READR-API:api:public')
+const debugPost = require('debug')('READR-API:api:public:post')
 const express = require('express')
 const router = express.Router()
 const superagent = require('superagent')
@@ -53,12 +54,15 @@ const fetchAndConstructMembers = (req, res) => {
 }
 
 const fetchAndConstructPosts = (req, res, next) => {
-  const url = `${apiHost}${req.url}`
   if (res.redis) {
     console.log('fetch data from Redis.', req.url)
     const resData = JSON.parse(res.redis)
     res.json(resData)
   } else {
+    const url = req.params.postId
+      ? `${apiHost}/post/${req.params.postId}?${get(req.url.split('?'), '1', '')}`
+      : `${apiHost}${req.url}`
+    debugPost('Going to public post from', url)
     superagent
       .get(url)
       .timeout({
@@ -71,7 +75,7 @@ const fetchAndConstructPosts = (req, res, next) => {
 
           /** make sure the post is published when fetching single post */
           const isSinglePostPublished = get(resData, '_items.0.publish_status') === POST_PUBLISH_STATUS.PUBLISHED
-          if (req.isSingular && !isSinglePostPublished) {
+          if (req.params.postId && !isSinglePostPublished) {
             resData = { 'Error': 'Post Not Found' }
           }
 
@@ -82,11 +86,10 @@ const fetchAndConstructPosts = (req, res, next) => {
             /**
              * if data not empty, go next to save data to redis
              */
-            req.url = `/public${req.url}`
             next()
           }
 
-          resData['_items'] ? res.json(resData) : res.send(Object.assign({ _items: [] }, resData))
+          res.status(resData['_items'] ? 200 : 404).json(resData)
         } else {
           const err_wrapper = handlerError(e, r)
           res.status(err_wrapper.status).json(err_wrapper.text)
@@ -322,8 +325,8 @@ router.get('/memo/:id', fetchFromRedis, (req, res, next) => {
 }, insertIntoRedis)
 
 router.get('/post/:postId', (req, res, next) => {
-  debug('req.url', req.url)
-  req.isSingular = true
+  req.url = `/public${req.url}`
+  debugPost('req.url', req.url)
   next()
 }, fetchFromRedis, fetchAndConstructPosts, insertIntoRedis)
 
