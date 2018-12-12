@@ -128,12 +128,11 @@ router.use('/trace', (req, res, next) => {
 }, require('./middle/gcLogger'))
 
 router.use('/post', [ authVerify, authorize, ], function(req, res, next) {
+  debug('Go Through!')
+  debug('Go Through!')
   next()
 })
 router.use('/posts', [ authVerify, authorize, ], function(req, res, next) {
-  next()
-})
-router.use('/tags', [ authVerify, authorize, ], function(req, res, next) {
   next()
 })
 
@@ -143,7 +142,7 @@ router.use('/tags', [ authVerify, authorize, ], function(req, res, next) {
  * 
  */
 
-router.get('/posts', authVerify, (req, res) => {
+router.get('/posts', (req, res) => {
   if (req.user.role !== config.ROLE_MAP.ADMIN && req.user.role !== config.ROLE_MAP.EDITOR) {
     if (!req.query.author) {
       return res.status(403).send('Forbidden. No right to access.').end()
@@ -253,7 +252,7 @@ router.post('/verify-recaptcha-token', (req, res) => {
 
 router.post('/login', authVerify, require('./middle/member/login'))
 
-router.post('/post', authVerify, (req, res) => {
+router.post('/post', (req, res) => {
   if (req.body.publish_status === config.POST_PUBLISH_STATUS.PUBLISHED && req.user.role !== config.ROLE_MAP.ADMIN && req.user.role !== config.ROLE_MAP.EDITOR) {
     return res.status(403).send('Forbidden. No right to access.').end()
   }
@@ -332,7 +331,7 @@ router.post('/deleteMemberProfileThumbnails', authVerify, (req, res) => {
  * 
  */
 
-router.put('/post', authVerify, (req, res) => {
+router.put('/post', (req, res) => {
   if (!req.body.author) {
     return res.status(403).send('Forbidden. No right to access.').end()
   }
@@ -418,7 +417,7 @@ router.route('*')
         })
       }
   }, insertIntoRedis)
-  .post(authVerify, (req, res) => {
+  .post(authVerify, authorize, (req, res) => {
     const url = `${apiHost}${req.url}`
      superagent
     .post(url)
@@ -435,7 +434,7 @@ router.route('*')
       }
     })
   })
-  .put(authVerify, function (req, res) {
+  .put(authVerify, authorize, function (req, res) {
     const url = `${apiHost}${req.url}`
     debug('Got a put req', req.url)
     superagent
@@ -452,7 +451,7 @@ router.route('*')
       }
     })
   })
-  .delete(authVerify, function (req, res) {
+  .delete(authVerify, authorize, function (req, res) {
     const url = `${apiHost}${req.url}`
     // const params = req.body || {}
     superagent

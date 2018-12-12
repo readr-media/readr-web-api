@@ -67,12 +67,13 @@ const fetchAndConstructPosts = (req, res, next) => {
       })      
       .end((e, r) => {
         if (!e && r) {
-          const resData = !req.isSinglular
-            ? JSON.parse(r.text)
-            : get(JSON.parse(r.text), '_items.0.publish_status') === POST_PUBLISH_STATUS.PUBLISHED
-            ? JSON.parse(r.text)
-            : { 'Error': 'Post Not Found' }
-          debug('resData', resData)
+          let resData = JSON.parse(r.text)
+
+          /** make sure the post is published when fetching single post */
+          const isSinglePostPublished = get(resData, '_items.0.publish_status') === POST_PUBLISH_STATUS.PUBLISHED
+          if (req.isSingular && !isSinglePostPublished) {
+            resData = { 'Error': 'Post Not Found' }
+          }
 
           if (resData['_items'] && resData.constructor === Object) {
             resData['_items'].forEach(post => { post.author = pickInsensitiveUserInfo(post.author) })
@@ -89,8 +90,12 @@ const fetchAndConstructPosts = (req, res, next) => {
         } else {
           const err_wrapper = handlerError(e, r)
           res.status(err_wrapper.status).json(err_wrapper.text)
-          console.error(`Error occurred during fetching public post data from : ${url}`)
-          console.error(e)
+          console.error(`
+            Error occurred during fetching public post data from : ${url}
+            err_wrapper.status: ${err_wrapper.status}
+            err_wrapper.text: ${err_wrapper.text}
+            err: ${e}
+          `)
         }
       })
   }
@@ -318,7 +323,7 @@ router.get('/memo/:id', fetchFromRedis, (req, res, next) => {
 
 router.get('/post/:postId', (req, res, next) => {
   debug('req.url', req.url)
-  req.isSinglular = true
+  req.isSingular = true
   next()
 }, fetchFromRedis, fetchAndConstructPosts, insertIntoRedis)
 
