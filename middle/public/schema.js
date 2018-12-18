@@ -24,7 +24,14 @@ module.exports = {
     publish_status: Joi.object().keys({
       '$in': Joi.array().items(Joi.number().min(2).max(2)),
     }),
-  }),  
+  }),
+  polls: Joi.object().keys({
+    active: Joi.number().min(1).max(1),
+    embed: Joi.string(),
+    max_result: Joi.number(),
+    page: Joi.number().min(1),
+    sort: Joi.string(),
+  }),
   posts: Joi.object().keys({
     max_result: Joi.number(),
     page: Joi.number().min(1),

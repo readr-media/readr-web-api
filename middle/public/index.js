@@ -324,6 +324,41 @@ router.get('/memo/:id', fetchFromRedis, (req, res, next) => {
   }
 }, insertIntoRedis)
 
+router.get('/polls', publicQueryValidation.validate(schema.polls), (req, res, next) => {
+  req.url = `/v2${req.url}`
+  next()
+}, fetchFromRedis, (req, res, next) => {
+  const url = `${apiHost}${req.url}`
+  if (res.redis) {
+    console.log('fetch data from Redis.', req.url)
+    const resData = JSON.parse(res.redis)
+    res.json(resData)
+  } else {
+    superagent
+      .get(url)
+      .timeout(API_TIMEOUT)
+      .end((e, r) => {
+        if (!e && r) {
+          const dt = JSON.parse(r.text)
+          if (dt['_items'] !== null && dt.constructor === Object) {
+            res.dataString = r.text
+            /**
+             * if data not empty, go next to save data to redis
+             */
+            next()
+          }
+          const resData = JSON.parse(r.text)
+          res.json(resData)
+        } else {
+          const err_wrapper = handlerError(e, r)
+          res.status(err_wrapper.status).json(err_wrapper.text)
+          console.error(`Error occurred during fetching public data from : ${url}`)
+          console.error(e)  
+        }
+      })
+  }
+}, insertIntoRedis)
+
 router.get('/post/:postId', (req, res, next) => {
   req.url = `/public${req.url}`
   debugPost('req.url', req.url)
