@@ -12,6 +12,7 @@
   "keywords": [],
   "author": "KAI-CHIH KEITH CHIANG",
   "license": "MIT",
+  "homepage": "https://github.com/readr-media/readr-web-api",
   "dependencies": {
     "@google-cloud/logging": "^1.2.0",
     "@google-cloud/pubsub": "^0.18.0",

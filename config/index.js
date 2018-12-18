@@ -15,6 +15,7 @@ module.exports = {
   GCP_FILE_BUCKET: config.has('GCP_FILE_BUCKET') && config.get('GCP_FILE_BUCKET'),
   GCP_KEYFILE: config.has('GCP_KEYFILE') && path.join(process.cwd(), config.get('GCP_KEYFILE')),
   GCP_PROJECT_ID: config.has('GCP_PROJECT_ID') && config.get('GCP_PROJECT_ID'),
+  GCP_PUBSUB_POLL_TOPIC_NAME: config.has('GCP_PUBSUB_POLL_TOPIC_NAME') && config.get('GCP_PUBSUB_POLL_TOPIC_NAME'),
   GCP_PUBSUB_TOPIC_NAME: config.has('GCP_PUBSUB_TOPIC_NAME') && config.get('GCP_PUBSUB_TOPIC_NAME'),
   GCS_IMG_MEMBER_PATH: config.has('GCS_IMG_MEMBER_PATH') && config.get('GCS_IMG_MEMBER_PATH'),
   GCS_IMG_POST_PATH: config.has('GCS_IMG_POST_PATH') && config.get('GCS_IMG_POST_PATH'),
