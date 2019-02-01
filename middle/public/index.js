@@ -396,8 +396,8 @@ router.get('/posts/latest', publicQueryValidation.validate(schema.posts), (req, 
   }
   next()
 }, fetchFromRedisCmd, (req, res, next) => {
-  debug('Stuff from redis:')
-  debug(res.redis)
+  debugPost('Stuff from redis:')
+  debugPost(res.redis)
   const maxResult = req.query.max_result || latestAmountInRedis
   const page = req.query.page || 1
   const pageCanSlice = Math.floor(latestAmountInRedis / maxResult)
@@ -415,10 +415,12 @@ router.get('/posts/latest', publicQueryValidation.validate(schema.posts), (req, 
     const redisDataSliced = redisData.slice(start, end)
     res.status(200).json({ _items: redisDataSliced })
   } else {
+    debugPost('Going To Fetch Data From API.')
     const showAuthor = req.query.show_author || 'true'
     const showUpdater = req.query.show_updater || 'true'
     const showTag = req.query.show_tag || 'true'
     const showComment = req.query.show_comment || 'true'
+    const showProject = req.query.show_project || 'true'
     const sort = req.query.sort || '-published_at'
     req.url = 
       `/posts?publish_status=${publishStatusPostQueryString}&` +
@@ -429,8 +431,8 @@ router.get('/posts/latest', publicQueryValidation.validate(schema.posts), (req, 
       `show_author=${showAuthor}&` +
       `show_updater=${showUpdater}&` +
       `show_tag=${showTag}&` +
-      `show_comment=${showComment}`
-    
+      `show_comment=${showComment}&` +
+      `show_project=${showProject}`
     next()
   }
 }, fetchFromRedis, fetchAndConstructPosts, insertIntoRedis )
