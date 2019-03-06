@@ -1,54 +1,68 @@
 const config = require('../../config')
-const debug = require('debug')('READR-API:api:search')
 const express = require('express')
 const router = express.Router()
 const superagent = require('superagent')
 const { fetchFromRedis, insertIntoRedis, } = require('../redis')
-const { get, } = require('lodash')
+const { handlerError, } = require('../../comm')
+const { get, toNumber } = require('lodash')
 
 router.get('/', fetchFromRedis, function(req, res, next) {
-  debug('Got a search call.')
-  let query = req.query
-  let url = `${config.SEARCH_PROTOCOL}://${config.SEARCH_HOST}${config.SEARCH_ENDPOINT}`
-  debug('>>> query', query)
-  // res.send({})
-  
   if (res.redis) {
-    debug('****************')
-    debug(res.redis)
-    console.log('fetch data from Redis.', req.url)
     const resData = JSON.parse(res.redis)
     res.json(resData)
   } else {
-    superagent
-    .get(url)
-    .timeout(config.SEARCH_API_TIMEOUT)
-    .set('X-Algolia-API-Key', config.SEARCH_API_KEY)
-    .set('X-Algolia-Application-Id', config.SEARCH_API_APPID)
-    .query(query)
-    .end(function(e, r) {
-      debug('###############')
-      if (e) {
-        const status = get(r, 'status') || get(e, 'status') || 500
-        res.status(status).send('{\'error\':' + e + '}')
-        console.error(`error during fetch data from search : ${req.url}`)
-        console.error(e)    
-      } else {
-        const dt = JSON.parse(r.text)
-        if (Object.keys(dt).length !== 0 && dt.constructor === Object) {
-          /**
-           * if data not empty, go next to save data to redis
-           */
-          res.dataString = r.text
-          debug('#####*****#####')
-          debug('data')
-          next()
+    const queryForEsSearch = {
+      'from': (toNumber(get(req, 'query.page', 1)) - 1) * toNumber(get(req, 'query.hitsPerPage', 12)),
+      'size': toNumber(get(req, 'query.hitsPerPage', 12)),
+      'query': {
+        'bool': {
+          'must': [
+            {
+              'multi_match' : {
+                'query': get(req, 'query.keyword', ''),
+                'type': 'phrase',
+                'fields': [ 'title^2', 'content' ]
+              }
+            },
+            {
+              'match' : { 'objectType': get(req, 'query.objectType', 'post') }
+            }
+          ]
         }
-        const resData = JSON.parse(r.text)
-        debug(resData)
-        res.json(resData)
-      }
+      },
+      'sort' : [
+        '_score',
+        { 
+          'published_at': { 'order': 'desc' }
+        }
+      ]
+    }
+    const es_host = `${config.SEARCH_PROTOCOL}://${config.SEARCH_HOST}:${config.SEARCH_PORT || 9200}${config.SEARCH_ENDPOINT}`
+    superagent
+    .post(es_host)
+    .timeout({ response: config.SEARCH_TIMEOUT, deadline: config.API_DEADLINE || 60000, })
+    .set('Content-Type', 'application/json')
+    .send(queryForEsSearch)
+    .then(response => {
+      const dt = JSON.parse(response.text)
+      res.json(dt)
+      if (Object.keys(dt).length !== 0 && dt.constructor === Object) {
+        /**
+         * if data not empty, go next to save data to redis
+         */
+        res.dataString = response.text
+        next()
+      }    
     })
+    .catch(error => {
+      const errWrapped = handlerError(error)
+      res.status(errWrapped.status).send({
+        status: errWrapped.status,
+        text: errWrapped.text
+      })
+      console.error(`\n[ERROR] POST elastic search api`, queryForEsSearch)
+      console.error(`${error}\n`)
+    })    
   }
 }, insertIntoRedis)
 
