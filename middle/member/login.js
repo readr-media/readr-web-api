@@ -20,26 +20,18 @@ const login = (req, res) => {
   }
   const tokenShouldBeBanned = req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer' && req.headers.authorization.split(' ')[1]
   const url = `${apiHost}/login`
+
   superagent
     .post(url)
-    .send(req.body)
+    .send(Object.assign({ keep_alive: req.body.keepAlive }, req.body))
     .end((err, response) => {
-      debug('Got response from login req.')
-      debug('login_mode:', req.body.login_mode)
+      debug('Got response from login api.')
+      debug('response', response.body)
+      const token = get(response, 'body.token')
+
       if (!err && response) {
         const mem = get(response, [ 'body', 'member', ], {})
         const scopes = constructScope(get(response, [ 'body', 'permissions', ]), get(mem, [ 'role', ], 1))
-        const token = jwtService.generateJwt({
-          id: get(mem, 'id', req.body.id), 
-          memuuid: get(mem, 'uuid'), 
-          email: get(mem, 'mail', req.body.email), 
-          name: get(mem, 'name'), 
-          nickname: get(mem, 'nickname'), 
-          role: get(mem, 'role', 1), 
-          talk_id: get(mem, 'talk_id', ''), 
-          keepAlive: req.body.keepAlive,
-          scopes,
-        })
         
         const cookies = new Cookies( req, res, {} )
         cookies.set(config.JWT_SIGNING_COOKIE_NAME, token, {

@@ -3,35 +3,6 @@ const config = require('../config')
 const jwt = require('jsonwebtoken')
 const uuid = require('uuid')
 
-const generateJwt = ({ id, email, name, nickname, role, keepAlive, scopes, talk_id, memuuid, }) => {
-  const expiry = new Date(Date.now() + (keepAlive ? 14 : 1) * 24 * 60 * 60 * 1000)
-  if (!config.JWT_SECRET) {
-    throw new Error('no signing key on secret, cannot sign')
-  }
-  const claims = {
-    id: id,
-    uuid: memuuid,
-    email,
-    nickname,
-    role,
-    scopes,
-    username: name,
-  }
-  
-  set(claims, config.JWT_USER_ID_CLAIM, talk_id)
-  return jwt.sign(
-    claims,
-    config.JWT_SECRET,
-    {
-      algorithm: config.JWT_ALG,
-      audience: config.JWT_AUDIENCE,
-      expiresIn: parseInt(expiry.getTime() / 1000),
-      issuer: config.JWT_ISSUER,
-      jwtid: uuid.v4(),
-    }
-  )
-}
-
 const generateDisposableJwt = () => {
   const expiry = new Date(Date.now() + 1 * 60 * 60 * 1000)
   return jwt.sign({
@@ -71,7 +42,6 @@ const verifyToken = (token, cb) => {
 }
 
 module.exports = {
-  generateJwt,
   generateDisposableJwt,
   generateResetToken,
   generateActivateAccountJwt,

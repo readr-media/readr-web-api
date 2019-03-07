@@ -62,7 +62,7 @@ const authorize = (req, res, next) => {
       Promise.all([
         new Promise(resolve => (resolve(get(whitelist, 'role') ? find(get(whitelist, 'role'), r => (r === req.user.role)) : true))),
         new Promise(resolve => (resolve(get(whitelist, 'perm') ? get(whitelist, 'perm').length === filter(get(whitelist, 'perm'), p => (find(filter(perms, { role: req.user.role, }), { object: p, }))).length : true))),
-      ]).then((isAuthorized) => {
+      ]).then(isAuthorized => {
         const isRoleAuthorized = isAuthorized[ 0 ]
         const isPermsAuthorized = isAuthorized[ 1 ]
         console.info(session, '\n### IS ROLE AUTHORIZED?', isRoleAuthorized, '\n### IS PERMS AUTHORIZED?', isPermsAuthorized)
