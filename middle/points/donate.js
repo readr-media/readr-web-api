@@ -74,8 +74,8 @@ router.post('/',
         const transaction_id = get(resData, 'id')
         res.json(resData)
 
-        /** go next to gen invoice if object_type === POINT_OBJECT_TYPE.CLEARUP */
-        if (get(req, 'body.object_type') !== POINT_OBJECT_TYPE.CLEARUP || !transaction_id) { return }
+        /** go next to gen invoice if object_type === POINT_OBJECT_TYPE.DONATE */
+        if (get(req, 'body.object_type') !== POINT_OBJECT_TYPE.DONATE || !transaction_id) { return }
 
         invoiceItem.amtSales = Math.abs(payload.points || 0)
         invoiceItem.good_name = `Readr Points: ${invoiceItem.amtSales}(points).`

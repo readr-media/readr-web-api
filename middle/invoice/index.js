@@ -194,10 +194,15 @@ const genInvoice = (req) => {
   data.member_name = data.member_name || get(req, 'user.nickname', get(req, 'user.email', '-'))
   data.member_mail = data.member_mail || get(req, 'user.email', '-')
 
+  console.log('[Invoice] Prepare to generate invoice')
+  console.log('[Invoice] req.body is: ', data)
+
   createInvoice(data)
   .then(response => {
-    debug('reaponse', response)
     debug('GENED INVOICE SUCCESSFULLY.')
+    debug('response', response)
+    console.log('[Invoice] GENED INVOICE SUCCESSFULLY.')
+    console.log('[Invoice] response: ', response)
   })
   .catch(error => {
     const err_wrapper = handlerError(error)
