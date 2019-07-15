@@ -1,11 +1,10 @@
 const path = require('path')
 const nodeExternals = require('webpack-node-externals');
 const webpack = require('webpack')
-const UglifyJSPlugin = require('uglifyjs-webpack-plugin')
 const { version } = require('../package.json')
 
 module.exports = {
-  entry: [ 'babel-polyfill', path.resolve(__dirname, '../index.js') ],
+  entry: [ path.resolve(__dirname, '../index.js') ],
   output: {
     path: path.resolve(__dirname, '../dist'),
     publicPath: '/dist/',
@@ -30,17 +29,14 @@ module.exports = {
         'VERSION': JSON.stringify(version),
       },
     }),
-    new webpack.optimize.UglifyJsPlugin({
-      compress: { warnings: false }
-    }),
     new webpack.LoaderOptionsPlugin({
       minimize: true
     })    
   ],
-  externals: [nodeExternals()],
+  externals: [ nodeExternals() ],
   target: 'node',
   resolve: {
-    extensions: ['.js'],
+    extensions: [ '.js' ],
     alias: {
       'src': path.resolve(__dirname, '../src'),
     }
