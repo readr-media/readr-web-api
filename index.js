@@ -1,7 +1,6 @@
 const bodyParser = require('body-parser')
 const config = require('./config')
 const debug = require('debug')('READR-API:index')
-const dotenv = require('dotenv')
 const express = require('express')
 const fs = require('fs')
 const jwtExpress = require('express-jwt')

@@ -1,11 +1,13 @@
 {
   "presets": [
-    ["env", { "modules": false }],
-    "es2015",
-    "stage-0"
+    [
+      "@babel/preset-env",
+      {
+        "modules": false
+      }
+    ]
   ],
   "plugins": [
-    "syntax-dynamic-import",
-    "add-module-exports"
+    "@babel/plugin-syntax-dynamic-import"
   ]
 }
