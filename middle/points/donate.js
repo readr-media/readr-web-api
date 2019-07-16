@@ -77,8 +77,8 @@ router.post('/',
         /** go next to gen invoice if object_type === POINT_OBJECT_TYPE.DONATE */
         if (get(req, 'body.object_type') !== POINT_OBJECT_TYPE.DONATE || !transaction_id) { return }
 
-        invoiceItem.amtSales = Math.abs(payload.points || 0)
-        invoiceItem.good_name = `Readr Points: ${invoiceItem.amtSales}(points).`
+        invoiceItem.amtSales = Math.abs(payload.currency || 0)
+        invoiceItem.good_name = `Readr Donate: $${invoiceItem.amtSales}(NTD).`
         
         /** Reset req.body and construct invoice date. */
         req.body = Object.assign({}, invoiceItem, {
