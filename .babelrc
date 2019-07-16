@@ -3,11 +3,14 @@
     [
       "@babel/preset-env",
       {
+        "useBuiltIns": "usage",
         "modules": false
       }
     ]
   ],
   "plugins": [
+    "@babel/plugin-transform-runtime",
     "@babel/plugin-syntax-dynamic-import"
-  ]
+  ],
+  "sourceType": "unambiguous"
 }
