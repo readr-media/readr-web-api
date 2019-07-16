@@ -290,7 +290,8 @@ router.post('/image/:sourceType', authVerify, upload.single('image'), (req, res)
           metadata: {
             contentType: file.mimetype,
           },
-        }).then((bucketFile) => {
+        })
+        .then((bucketFile) => {
           console.info(`file ${fileName}(${path}) completed uploading to bucket `)
           fs.unlink(path, (err) => {
             if (err) {
@@ -305,11 +306,14 @@ router.post('/image/:sourceType', authVerify, upload.single('image'), (req, res)
         debug(`${destination}/${origImg}`)
         res.status(200).send({url: `${destination}/${origImg}`,})
       })
+      .catch(err => {
+        res.status(500).send(err)
+        console.error(`error during fetch data from : ${url}`, err)
+      })
     })
     .catch((err) => {
       res.status(500).send(err)
-      console.error(`error during fetch data from : ${url}`)
-      console.error(err)
+      console.error(`error during fetch data from : ${url}`, err)
     })
 })
 
