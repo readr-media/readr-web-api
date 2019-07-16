@@ -142,8 +142,7 @@ const createInvoice = data => new Promise((resolve, reject) => {
     }
   }
   payload.Comment = truncate(message, 68)
-  debug('payload:')
-  debug(payload)
+  debug('payload: ', payload)
 
   const KEY = get(EZPAY, 'KEY', '')
   const IV = get(EZPAY, 'IV', '')
@@ -155,6 +154,7 @@ const createInvoice = data => new Promise((resolve, reject) => {
     padding: CryptoJS.pad.Pkcs7,
   })
   const ciphertext = encrypted.toString(CryptoJS.format.Hex)
+  debug('ciphertext: ', ciphertext)
 
   const bytes = CryptoJS.AES.decrypt({ ciphertext: CryptoJS.enc.Hex.parse(ciphertext) }, CryptoJS.enc.Utf8.parse(KEY), {
     iv: CryptoJS.enc.Utf8.parse(IV),
@@ -162,7 +162,7 @@ const createInvoice = data => new Promise((resolve, reject) => {
     padding: CryptoJS.pad.Pkcs7,    
   })
   const decryptedData = bytes.toString(CryptoJS.enc.Utf8)
-  debug(decryptedData)
+  debug('decryptedData: ', decryptedData)
 
   superagent
   .post(get(EZPAY, 'HOST', ''))
