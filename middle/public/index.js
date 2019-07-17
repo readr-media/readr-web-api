@@ -367,22 +367,23 @@ router.get('/post/:postId', (req, res, next) => {
 
 router.get('/posts', publicQueryValidation.validate(schema.posts), (req, res, next) => {
   const publishStatusPostQueryString = `{"$in":[${POST_PUBLISH_STATUS.PUBLISHED}]}`
-  const whitelist = [ 'author', 'max_result', 'page', 'sort', 'type', ]
+  const whitelist = [
+    'author',
+    'max_result',
+    'page',
+    'sort',
+    'type',
+    'project_id',
+    'slug'
+  ]
+
   if (Object.keys(req.query).length === 0) {
-    req.url += `?publish_status=${publishStatusPostQueryString}&type={"$in":[${POST_TYPE.REVIEW}, ${POST_TYPE.NEWS}]}`
+    req.url += `?publish_status=${publishStatusPostQueryString}`
   } else {
     req.url = `/posts?publish_status=${publishStatusPostQueryString}`
     whitelist.forEach((key) => {
-      if (key !== 'type') {
-        if (req.query.hasOwnProperty(key)) {
-          req.url += `&${key}=${req.query[key]}`
-        }
-      } else {
-        if (req.query.hasOwnProperty(key)) {
-          req.url += `&${key}=${req.query[key]}`
-        } else {
-          req.url += `&type={"$in":[${POST_TYPE.REVIEW}, ${POST_TYPE.NEWS}]}`
-        }
+      if (req.query.hasOwnProperty(key)) {
+        req.url += `&${key}=${req.query[key]}`
       }
     })
   }
