@@ -13,6 +13,7 @@ const publicQueryValidation = require('../../services/validate')
 const schema = require('./schema')
 const pathToRegexp = require('path-to-regexp')
 const url = require('url')
+const cors = require('./cors')
 
 const apiHost = API_PROTOCOL + '://' + API_HOST + ':' + API_PORT
 
@@ -453,7 +454,7 @@ router.get('/posts/hot', (req, res) => {
   })
 })
 
-router.get('/projects', publicQueryValidation.validate(schema.projects), (req, res, next) => {
+router.get('/projects', cors, publicQueryValidation.validate(schema.projects), (req, res, next) => {
   let url = '/project/list?'
   mapKeys(req.query, (value, key) => {
     url = `${url}&${key}=${value}`
