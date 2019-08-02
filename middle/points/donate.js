@@ -9,6 +9,7 @@ const { genInvoice, } = require('../invoice')
 const { get, } = require('lodash')
 const { handlerError, } = require('../../comm')
 const isEmail = require('validator/lib/isEmail')
+const corsMiddle = require('../corsMiddle')
 
 const apiHost = API_PROTOCOL + '://' + API_HOST + ':' + API_PORT
 
@@ -44,7 +45,15 @@ const validateDonator = (req, res, next) => {
   }
 }
 
+// For CORS non-simple requests
+router.options('/*', corsMiddle, res => {
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With')
+  res.send(200)
+})
+
 router.post('/',
+  corsMiddle,
   validateObjectType,
   validateDonator,
   (req, res, next) => {
