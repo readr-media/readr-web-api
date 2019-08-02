@@ -45,6 +45,13 @@ const validateDonator = (req, res, next) => {
   }
 }
 
+// For CORS non-simple requests
+router.options('/*', corsMiddle, res => {
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With')
+  res.send(200)
+})
+
 router.post('/',
   corsMiddle,
   validateObjectType,
