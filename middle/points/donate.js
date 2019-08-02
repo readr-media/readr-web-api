@@ -9,6 +9,7 @@ const { genInvoice, } = require('../invoice')
 const { get, } = require('lodash')
 const { handlerError, } = require('../../comm')
 const isEmail = require('validator/lib/isEmail')
+const corsMiddle = require('../corsMiddle')
 
 const apiHost = API_PROTOCOL + '://' + API_HOST + ':' + API_PORT
 
@@ -45,6 +46,7 @@ const validateDonator = (req, res, next) => {
 }
 
 router.post('/',
+  corsMiddle,
   validateObjectType,
   validateDonator,
   (req, res, next) => {
