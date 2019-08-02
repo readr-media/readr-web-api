@@ -13,7 +13,7 @@ const publicQueryValidation = require('../../services/validate')
 const schema = require('./schema')
 const pathToRegexp = require('path-to-regexp')
 const url = require('url')
-const corsMiddle = require('./corsMiddle')
+const corsMiddle = require('../corsMiddle')
 
 const apiHost = API_PROTOCOL + '://' + API_HOST + ':' + API_PORT
 
@@ -366,7 +366,7 @@ router.get('/post/:postId', (req, res, next) => {
   next()
 }, fetchFromRedis, fetchAndConstructPosts, insertIntoRedis)
 
-router.get('/posts', publicQueryValidation.validate(schema.posts), (req, res, next) => {
+router.get('/posts', corsMiddle, publicQueryValidation.validate(schema.posts), (req, res, next) => {
   const publishStatusPostQueryString = `{"$in":[${POST_PUBLISH_STATUS.PUBLISHED}]}`
   const whitelist = [
     'author',
