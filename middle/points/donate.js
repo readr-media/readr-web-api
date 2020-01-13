@@ -9,6 +9,7 @@ const { genInvoice, } = require('../invoice')
 const { get, } = require('lodash')
 const { handlerError, } = require('../../comm')
 const isEmail = require('validator/lib/isEmail')
+const isMobilePhone = require('validator/lib/isMobilePhone')
 const corsMiddle = require('../corsMiddle')
 
 const apiHost = API_PROTOCOL + '://' + API_HOST + ':' + API_PORT
@@ -32,13 +33,15 @@ const validateDonator = (req, res, next) => {
     const payload = get(req, 'body', {})
     const memberName = get(payload, 'member_name', '')
     const memberMail = get(payload, 'member_mail', '')
+    const memberPhone = get(payload, 'member_phone', '')
     debug('memberName: ', memberName)
     debug('memberMail: ', memberMail)
-    const valid = memberName && isEmail(memberMail)
+    debug('memberPhone: ', memberPhone)
+    const valid = memberName && isEmail(memberMail) && isMobilePhone(memberPhone)
     if (valid) {
       next()
     } else {
-      res.status(403).end('Invalid memberName or memberMail')
+      res.status(403).end('Invalid memberName, memberMail or memberPhone')
     }
   } catch (e) {
     console.error(e)
