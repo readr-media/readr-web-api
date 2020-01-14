@@ -37,8 +37,6 @@ const validateDonator = (req, res, next) => {
     debug('memberName: ', memberName)
     debug('memberMail: ', memberMail)
     debug('memberPhone: ', memberPhone)
-    console.log(isMobilePhone);
-    
     const valid = memberName && isEmail(memberMail) && isMobilePhone(memberPhone)
     if (valid) {
       next()
