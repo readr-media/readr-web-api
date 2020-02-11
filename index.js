@@ -116,6 +116,7 @@ router.use('/polls', [ authVerify, authorize, ], require('./middle/poll'))
 router.use('/public', require('./middle/public'))
 router.use('/project', [ authVerify, authorize, ], require('./middle/project'))
 router.use('/search', require('./middle/search'))
+router.use('/subscriptions', require('./middle/subscriptions'))
 router.use('/token', require('./middle/services/token'))
 router.use('/trace', (req, res, next) => {
   debug('trace', req.url)
