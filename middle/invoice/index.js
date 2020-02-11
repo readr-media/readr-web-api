@@ -25,7 +25,7 @@ const createInvoice = data => new Promise((resolve, reject) => {
     TaxType: get(EZPAY, 'TAX_TYPE', '1'),
     ItemName: map(get(data, 'items', []), item => get(item, 'name', '')).join('|'),
     ItemCount: map(get(data, 'items', []), item => get(item, 'count', '')).join('|'),
-    ItemUnit: get(EZPAY, 'UNIT', 'Unit'),
+    ItemUnit: get(data, 'item_unit') || get(EZPAY, 'UNIT', 'Unit'),
   }
   let message = `Paid by credit card: ****-****-****-${get(data, 'lastFourNum', '')}.`
   
