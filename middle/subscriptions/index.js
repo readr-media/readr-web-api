@@ -51,7 +51,8 @@ const setCommonValue = (req, res, next) => {
   next()
 }
 
-const setRequestBodyForGenInvoice = (req, res, next) => {
+// For genInvoice requirement
+const restructureBody = (req, res, next) => {
   try {
     let body = req.body
     body.category = get(body, 'invoiceInfos.category')
@@ -115,6 +116,6 @@ router.post('/', validate, setCommonValue, (req, res, next) => {
         return res.status(errorWrapper.status).json(errorWrapper.text)      
       }
     })
-}, setRequestBodyForGenInvoice, genInvoice)
+}, restructureBody, genInvoice)
 
 module.exports = router
