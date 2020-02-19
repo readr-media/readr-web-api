@@ -1,3 +1,10 @@
+/*
+  Document:
+  1. Subscription API（後端）: https://github.com/readr-media/readr-restful/wiki/Subscription
+  2. TapPay SDK（付款）: https://docs.tappaysdk.com/tutorial/zh/home.html
+  3. ezPay API（發票）: https://inv.ezpay.com.tw/dw_files/info_api/ezPay_EZP_INVI_1_1_9.pdf
+*/
+
 const express = require('express')
 const router = express.Router()
 const superagent = require('superagent')
@@ -8,10 +15,8 @@ const isEmail = require('validator/lib/isEmail')
 const { API_PROTOCOL, API_HOST, API_PORT } = require('../../config')
 const { decamelizeKeys } = require('humps')
 const { default: isMobilePhone } = require('validator/lib/isMobilePhone')
-const { genInvoice } = require('../invoice')
 const { get } = require('lodash')
 const { handlerError, } = require('../../comm')
-
 
 const apiHost = API_PROTOCOL + '://' + API_HOST + ':' + API_PORT
 
@@ -32,14 +37,14 @@ const validate = (req, res, next) => {
     const validated = isMobilePhone(cardholderPhoneNumber) && cardholderName && isEmail(cardholderEmail) && prime && invoiceInfos
     
     if (!validated) {
-      console.error(`[error] POST /subscriptions`, 'req.body:', req.body)
+      console.error(`[Error] POST/subscriptions`, 'req.body:', req.body)
       return res.status(403).end('Invalid request body.')
     }
     next()
 }
 
 const setCommonValue = (req, res, next) => {
-  const body = req.body
+  let body = req.body
   body.createdAt = body.createdAt || new Date().toISOString()
   body.paymentService = PAYMENT_SERVICE
   body.invoiceService = INVOICE_SERVICE
@@ -48,44 +53,16 @@ const setCommonValue = (req, res, next) => {
   body.invoiceInfos.itemName = [ ITEM_NAME ]
   body.invoiceInfos.itemUnit = [ ITEM_UNIT ]
   body.invoiceInfos.itemCount = [ ITEM_COUNT ]
-  next()
-}
-
-// For genInvoice requirement
-const restructureBody = (req, res, next) => {
-  try {
-    let body = req.body
-    body.category = get(body, 'invoiceInfos.category')
-    body.carrierType = get(body, 'invoiceInfos.carrierType')
-    body.memberName = get(body, 'invoiceInfos.buyerName')
-    body.memberMail = get(body, 'email')
-    body.lastFourNum = get(body, 'invoiceInfos.lastFourNum')
-    body.amtSales = body.invoiceInfos.itemPrice[0]
-    body.itemUnit = ITEM_UNIT
-    body.items = [
-      {
-        name: ITEM_NAME,
-        price: body.amtSales,
-        count: ITEM_COUNT
-      }
-    ]
-
-    if (body.category !== 1) {
-      body.businessAddress = get(body, 'invoiceInfos.buyerAddress')
-      body.businessTitle = get(body, 'invoiceInfos.buyerName')
-      body.businessTaxNo = get(body, 'invoiceInfos.buyerUbn')
-    }
-
-    body = decamelizeKeys(body, {
-      process: (key, convert, options) => {
-        const noParseKeys = /(amtSales|businessAddress|businessTaxNo|businessTitle|carrierType|lastFourNum|loveCode)/
-        return key.match(noParseKeys) ? key : convert(key, options)
-      }
-    })
-    next()
-  } catch (error) {
-    console.error(`[error] set request body for generate invoice`, 'req.body:', req.body, error)
+  body.invoiceInfos.printFlag = 'N'
+  
+  // Rule by ezPay
+  if (body.invoiceInfos.category === 'B2B') {
+    body.invoiceInfos.printFlag = 'Y'
   }
+  if (!body.invoiceInfos.carrierType && !body.invoiceInfos.loceCode) {
+    body.invoiceInfos.printFlag = 'Y'
+  }
+  next()
 }
 
 // For CORS non-simple requests
@@ -98,24 +75,19 @@ router.options('/*', corsMiddle, res => {
 router.post('/', validate, setCommonValue, (req, res, next) => {
   const url = `${apiHost}/subscriptions`
   const bodyDecamelized = decamelizeKeys(req.body)
-
   superagent
     .post(url)
     .send(bodyDecamelized)
     .end((error, response) => {
-      
       if (!error && response) {
-        const resData = JSON.parse(response.text)
-        res.json(resData)
-
-        req.body.transactionId = get(resData, 'id')
-        next()
+        res.send('Subscribe READr successfully.')
+        console.info(`Subscriptions successfully. Paid by ${req.body.paymentInfos.cardholder.email} credit card: *-*-*-${req.body.invoiceInfos.lastFourNum}.`)
       } else {
-        console.error(`Error occurred when post /subscriptions`, 'req.body:', req.body, error)
+        console.error('[Error] POST/subscriptions', 'req.body:', bodyDecamelized, error)
         const errorWrapper = handlerError(error, response)
         return res.status(errorWrapper.status).json(errorWrapper.text)      
       }
     })
-}, restructureBody, genInvoice)
+})
 
 module.exports = router
