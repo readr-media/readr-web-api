@@ -12,10 +12,10 @@ const isValidJSONString = str => {
 const handlerError = (err, res) => {
   debug('err:')
   debug(err)
-  const text = get(res, 'text') || get(err, 'message', '{}')
+  const text = get(res, 'text') || get(err, 'message')
   return {
     status: (typeof(get(res, 'status')) === 'number' && get(res, 'status')) || get(err, 'status') || 500,
-    text: isValidJSONString(text) ? text : `{}`,
+    text: (isValidJSONString(text) || typeof text === 'string') ? text : `{}`,
   }
 }
 
